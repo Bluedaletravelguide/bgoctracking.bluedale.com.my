@@ -119,7 +119,7 @@ class StockInventoryController extends Controller
                 DB::raw("GROUP_CONCAT(COALESCE(remarks, '') ORDER BY t_in.id SEPARATOR '|||') as remarks_in"),
                 DB::raw("GROUP_CONCAT(transaction_date ORDER BY t_in.id SEPARATOR '|||') as date_in"),
                 DB::raw("GROUP_CONCAT(COALESCE(client_companies.id, '') ORDER BY t_in.id SEPARATOR '|||') as client_in_ids"),
-                DB::raw("GROUP_CONCAT(COALESCE(client_companies.name, '') ORDER BY t_in.id SEPARATOR '|||') as client_in_name"),
+                DB::raw("GROUP_CONCAT(COALESCE(client_companies.name, to_contractor.name, from_contractor.name, '') ORDER BY t_in.id SEPARATOR '|||') as client_in_name"),
                 DB::raw("GROUP_CONCAT(COALESCE(CONCAT(billboards.site_number, ' - ', locations.name), '') ORDER BY t_in.id SEPARATOR '|||') as site_in"),
                 DB::raw("GROUP_CONCAT(COALESCE(billboards.type, '') ORDER BY t_in.id SEPARATOR '|||') as billboard_type_in"),
                 DB::raw("GROUP_CONCAT(COALESCE(billboards.size, '') ORDER BY t_in.id SEPARATOR '|||') as billboard_size_in")
@@ -127,6 +127,8 @@ class StockInventoryController extends Controller
             ->leftJoin('client_companies', 'client_companies.id', '=', 't_in.client_id')
             ->leftJoin('billboards', 'billboards.id', '=', 't_in.billboard_id')
             ->leftJoin('locations', 'locations.id', '=', 'billboards.location_id')
+            ->leftJoin('contractors as to_contractor', 'to_contractor.id', '=', 't_in.to_contractor_id')
+            ->leftJoin('contractors as from_contractor', 'from_contractor.id', '=', 't_in.from_contractor_id')
             ->where('t_in.type', 'in')
             ->groupBy('t_in.stock_inventory_id');
 
@@ -139,7 +141,7 @@ class StockInventoryController extends Controller
                 DB::raw("GROUP_CONCAT(COALESCE(remarks, '') ORDER BY t_out.id SEPARATOR '|||') as remarks_out"),
                 DB::raw("GROUP_CONCAT(transaction_date ORDER BY t_out.id SEPARATOR '|||') as date_out"),
                 DB::raw("GROUP_CONCAT(COALESCE(client_companies.id, '') ORDER BY t_out.id SEPARATOR '|||') as client_out_ids"),
-                DB::raw("GROUP_CONCAT(COALESCE(client_companies.name, '') ORDER BY t_out.id SEPARATOR '|||') as client_out_name"),
+                DB::raw("GROUP_CONCAT(COALESCE(client_companies.name, to_contractor.name, from_contractor.name, '') ORDER BY t_out.id SEPARATOR '|||') as client_out_name"),
                 DB::raw("GROUP_CONCAT(COALESCE(CONCAT(billboards.site_number, ' - ', locations.name), '') ORDER BY t_out.id SEPARATOR '|||') as site_out"),
                 DB::raw("GROUP_CONCAT(COALESCE(billboards.type, '') ORDER BY t_out.id SEPARATOR '|||') as billboard_type_out"),
                 DB::raw("GROUP_CONCAT(COALESCE(billboards.size, '') ORDER BY t_out.id SEPARATOR '|||') as billboard_size_out")
@@ -147,6 +149,8 @@ class StockInventoryController extends Controller
             ->leftJoin('client_companies', 'client_companies.id', '=', 't_out.client_id')
             ->leftJoin('billboards', 'billboards.id', '=', 't_out.billboard_id')
             ->leftJoin('locations', 'locations.id', '=', 'billboards.location_id')
+            ->leftJoin('contractors as to_contractor', 'to_contractor.id', '=', 't_out.to_contractor_id')
+            ->leftJoin('contractors as from_contractor', 'from_contractor.id', '=', 't_out.from_contractor_id')
             ->where('t_out.type', 'out')
             ->groupBy('t_out.stock_inventory_id');
 
@@ -475,12 +479,12 @@ class StockInventoryController extends Controller
             'date_out'              => 'nullable|date',
             'sites_in'                      => 'nullable|array',
             'sites_in.*.id'                 => 'nullable|exists:billboards,id',
-            'sites_in.*.qty'                => 'required_with:sites_in.*.id|integer|min:1',
+            'sites_in.*.qty'                => 'nullable|integer',
             'sites_in.*.client_id'          => 'nullable|integer', // Initially nullable
             'sites_in.*.client_type'        => 'nullable|string|in:contractor,client',
             'sites_out'                     => 'nullable|array',
             'sites_out.*.id'                => 'nullable|exists:billboards,id',
-            'sites_out.*.qty'               => 'required_with:sites_out.*.id|integer|min:1',
+            'sites_out.*.qty'               => 'nullable|integer',
             'sites_out.*.client_id'         => 'nullable|integer', // Initially nullable
             'sites_out.*.client_type'       => 'nullable|string|in:contractor,client',
         ]);
@@ -558,7 +562,7 @@ class StockInventoryController extends Controller
                     if (($row['client_type'] ?? 'client') === 'client' && empty($row['client_id'])) {
                         $v->errors()->add("sites_out.$i.client_id", 'Client ID is required for OUT transactions to a client.');
                     }
-                    if (($row['client_type'] ?? 'client') === 'contractor' && empty($row['client_id'])) {
+                    if (($row['client_type'] ?? 'contractor') === 'contractor' && empty($row['client_id'])) {
                         $v->errors()->add("sites_out.$i.client_id", 'Contractor ID is required for OUT transactions to another contractor.');
                     }
                     if (($row['client_type'] ?? null) === 'contractor') {
@@ -809,11 +813,11 @@ class StockInventoryController extends Controller
             'remarks_out'        => 'nullable|string|max:255',
             'client_in'          => 'nullable|integer|exists:client_companies,id', // Initially nullable
             'site_in'            => 'nullable|integer|exists:billboards,id',
-            'qty_in'             => 'required_with:site_in|integer|min:1',
+            'qty_in'             => 'nullable|integer',
             'date_in'            => 'nullable|date', // Initially nullable
             'client_out'         => 'nullable|integer|exists:client_companies,id', // Initially nullable
             'site_out'           => 'nullable|integer|exists:billboards,id',
-            'qty_out'            => 'required_with:site_out|integer|min:1',
+            'qty_out'            => 'nullable|integer',
             'date_out'           => 'nullable|date', // Initially nullable
         ]);
 

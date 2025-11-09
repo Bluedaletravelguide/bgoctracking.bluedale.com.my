@@ -1425,10 +1425,10 @@
                 const hasOutData = $('#editBillboardOut').val() && parseInt($('#editQtyOut').val() || 0) >
                     0;
                 // Optional: Prevent submission if neither side has data
-                if (!hasInData && !hasOutData) {
-                    alert('Please fill in at least one site and quantity (In or Out) to update.');
-                    return; // Stop submission if no data is present to update
-                }
+                //if (!hasInData && !hasOutData) {
+                //    alert('Please fill in at least one site and quantity (In or Out) to update.');
+                //    return; // Stop submission if no data is present to update
+                //}
                 console.log("Editing Stock Inventory ID:", transactionInId, transactionOutId,
                     stockInventoryId);
                 // Optional: Prevent submission if a transaction ID is expected but missing for an active side
@@ -2079,10 +2079,10 @@
                 document.querySelectorAll('.select2-container--open').forEach(c => c.classList.remove(
                     'select2-container--open'));
                 document.querySelectorAll('.select2-dropdown, .select2-container.select2-container--open').forEach(
-                n => {
-                    // biar aman, sembunyikan
-                    if (n && n.style) n.style.display = 'none';
-                });
+                    n => {
+                        // biar aman, sembunyikan
+                        if (n && n.style) n.style.display = 'none';
+                    });
             }
 
             window.openModal = function(idOrHash) {
