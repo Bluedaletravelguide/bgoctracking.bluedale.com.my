@@ -205,11 +205,11 @@ $isChildRow = !is_null($childId);
 
 @if(isset($paginator))
     <div class="mt-4">
-        {{ $paginator->onEachSide(1)->links() }}
+        {{ $paginator->appends(request()->query())->onEachSide(1)->links() }}
     </div>
 @elseif(method_exists($rows, 'links'))
     <div class="mt-4">
-        {{ $rows->onEachSide(1)->links() }}
+        {{ $rows->appends(request()->query())->onEachSide(1)->links() }}
     </div>
 @endif
 

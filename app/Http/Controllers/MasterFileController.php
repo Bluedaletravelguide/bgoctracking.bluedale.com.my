@@ -151,11 +151,12 @@ class MasterFileController extends Controller
                         ->orWhere('kltg_industry', 'like', "%{$search}%");
                 });
             })
-            ->when($request->filled('date_from'), fn($q) => $q->whereDate('created_at', '>=', $request->get('date_from')))
-            ->when($request->filled('date_to'),   fn($q) => $q->whereDate('created_at', '<=', $request->get('date_to')))
-            ->latest('created_at')
-            ->paginate(25)
-            ->appends($request->query());
+                    ->when($request->filled('date_from'), fn($q) => $q->whereDate('created_at', '>=', $request->get('date_from')))
+        ->when($request->filled('date_to'),   fn($q) => $q->whereDate('created_at', '<=', $request->get('date_to')))
+        ->latest('created_at')
+        ->paginate(10)              // ✅ MAX 10 ROWS PER PAGE
+        ->withQueryString();        // ✅ keep all current filters in the URL
+
 
         $columns = [
             ['key' => 'created_at',        'label' => 'Date Created'],
@@ -295,10 +296,12 @@ class MasterFileController extends Controller
 
 
 
-       $rows = $q
-    ->orderByRaw('(COALESCE(cc.name, mf.company) IS NULL), LOWER(COALESCE(cc.name, mf.company)) ASC')
-    ->orderBy('mf.date', 'DESC')
-    ->get();
+             $rows = $q
+            ->orderByRaw('(COALESCE(cc.name, mf.company) IS NULL), LOWER(COALESCE(cc.name, mf.company)) ASC')
+            ->orderBy('mf.date', 'DESC')
+            ->paginate(10)          // ✅ MAX 10 ROWS PER PAGE
+            ->withQueryString();    // ✅ keep month + search in the URL
+
 
 
         $columns = [

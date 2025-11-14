@@ -86,6 +86,33 @@
             @apply ring-1 ring-[#4bbbed]/20;
         }
 
+        /* Status indicator */
+        .status-dot {
+            @apply w-2 h-2 rounded-full bg-green-400;
+            animation: pulse 2s infinite;
+        }
+
+        /* Frozen columns styling */
+        .freeze-col {
+            position: sticky;
+            background-color: white;
+            z-index: 20;
+        }
+
+        .freeze-col-1 {
+            left: 0;
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .freeze-col-2 {
+            left: 80px; /* width of first column */
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+        }
+
+        thead .freeze-col {
+            z-index: 30;
+            background-color: #FAFAFA;
+        }
         .field-readonly {
             @apply bg-neutral-50 text-neutral-700 rounded-lg px-3 py-2 text-sm;
         }
@@ -263,11 +290,12 @@
                 {{-- Table Content --}}
                 <div class="overflow-x-auto">
                     <table id="outdoorTable" class="min-w-full">
-                        {{-- Table Headers --}}
-                        <thead class="bg-neutral-50 sticky top-0 z-10">
-                            <tr class="hairline border-b">
-                                <th class="px-4 py-4 table-header text-center min-w-[80px] w-[80px]">NO</th>
-                                <th class="px-4 py-4 table-header min-w-[200px] w-[200px]">Company</th>
+                       {{-- Table Headers --}}
+<thead class="bg-neutral-50 sticky top-0 z-10">
+    <tr class="hairline border-b">
+        <th class="px-4 py-4 table-header text-center min-w-[80px] w-[80px] freeze-col freeze-col-1">NO</th>
+        <th class="px-4 py-4 table-header min-w-[200px] w-[200px] freeze-col freeze-col-2">Company</th>
+        <th class="px-4 py-4 table-header min-w-[200px] w-[200px]">Person In Charge</th>
                                 <th class="px-4 py-4 table-header min-w-[200px] w-[200px]">Person In Charge</th>
                                 <th class="px-4 py-4 table-header min-w-[180px] w-[180px]">Product</th>
                                 <th class="px-4 py-4 table-header min-w-[180px] w-[180px]">Site</th>
@@ -322,18 +350,17 @@
                                         data-year="{{ (int) ($year ?? now()->year) }}"
                                         data-month="{{ $isMonth ? (int) $month : '' }}">
 
-                                        {{-- ID --}}
-                                        <td
-                                            class="bg-white hairline border-r px-4 py-4 text-center ink font-medium tabular-nums min-w-[80px] w-[80px]">
-                                            {{ $rows->firstItem() + $i }}
-                                        </td>
+                                      {{-- ID --}}
+<td class="bg-white hairline border-r px-4 py-4 text-center ink font-medium tabular-nums min-w-[80px] w-[80px] freeze-col freeze-col-1">
+    {{ $rows->firstItem() + $i }}
+</td>
 
-                                        {{-- Company --}}
-                                        <td class="bg-white hairline border-r px-4 py-4 min-w-[200px] w-[200px]">
-                                            <div class="field-readonly font-medium truncate">
-                                                {{ $row->company ?? '—' }}
-                                            </div>
-                                        </td>
+{{-- Company --}}
+<td class="bg-white hairline border-r px-4 py-4 min-w-[200px] w-[200px] freeze-col freeze-col-2">
+    <div class="field-readonly font-medium truncate">
+        {{ $row->company ?? '—' }}
+    </div>
+</td>
 
                                         {{-- Person In Charge --}}
                                         <td class="bg-white hairline border-r px-4 py-4 min-w-[200px] w-[200px]">

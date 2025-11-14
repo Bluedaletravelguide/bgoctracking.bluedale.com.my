@@ -112,6 +112,34 @@
             @apply ring-1 ring-[#4bbbed]/20 outline-none;
         }
 
+        /* Frozen columns styling */
+.freeze-col {
+    position: sticky;
+    background-color: white;
+    z-index: 20;
+}
+
+.freeze-col-1 {
+    left: 0;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.freeze-col-2 {
+    left: 48px; /* width of NO column */
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.freeze-col-3 {
+    left: 168px; /* 48px (col-1) + 120px (col-2) */
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+thead .freeze-col {
+    z-index: 30;
+    background-color: #FAFAFA;
+}
+
+
         /* Monthly grid specific styles */
         .monthly-input {
             @apply h-10 text-xs rounded border border-neutral-200 focus:ring-1 focus:ring-[#4bbbed]/20 focus:border-[#4bbbed] transition-all duration-150;
@@ -369,17 +397,17 @@
                     <div class="overflow-x-auto">
                         <table id="outdoorTable" class="min-w-[3250px] w-full">
                             <thead class="bg-neutral-50 sticky top-0 z-10">
-                                <tr class="hairline border-b">
-                                    <th class="px-3 py-2 text-right w-12">NO</th>
-                                    <th class="px-4 py-4 text-left table-header" style="min-width:120px;">
-                                        Date Created
-                                    </th>
-                                    <th class="px-4 py-4 text-left table-header" style="min-width:220px;">
-                                        Company
-                                    </th>
-                                    <th class="px-4 py-4 text-left table-header" style="min-width:160px;">
-                                        Product
-                                    </th>
+    <tr class="hairline border-b">
+        <th class="px-3 py-2 text-right w-12 freeze-col freeze-col-1">NO</th>
+        <th class="px-4 py-4 text-left table-header freeze-col freeze-col-2" style="min-width:120px;">
+            Date Created
+        </th>
+        <th class="px-4 py-4 text-left table-header freeze-col freeze-col-3" style="min-width:220px;">
+            Company
+        </th>
+        <th class="px-4 py-4 text-left table-header" style="min-width:160px;">
+            Product
+        </th>
                                     <th class="px-4 py-4 text-left table-header" style="min-width:220px;">
                                         Site(s)
                                     </th>
@@ -429,21 +457,19 @@
     $endDisp   = df($end);
 @endphp
 
-                                    <tr class="hover:bg-neutral-50 hover-lift transition-all duration-150"
-                                        data-idx="{{ $loop->index }}">
-                                        <td class="px-3 py-2 text-right tabular-nums">{{ $loop->iteration }}</td>
-                                        <td class="px-4 py-3 sans text-sm text-neutral-600 tabular-nums">
-                                            {{ $row->created_at ? \Carbon\Carbon::parse($row->created_at)->format('d/m/y') : '' }}
-                                        </td>
-
-                                        <td class="px-4 py-3 sans text-sm font-medium ink">
-                                            <div class="max-w-[200px] truncate" title="{{ $company }}">
-                                                {{ $company }}
-                                            </div>
-                                        </td>
-                                        <td class="px-4 py-3 sans text-sm text-neutral-700">
-                                            {{ $row->product }}
-                                        </td>
+                                    <tr class="hover:bg-neutral-50 hover-lift transition-all duration-150" data-idx="{{ $loop->index }}">
+    <td class="px-3 py-2 text-right tabular-nums freeze-col freeze-col-1">{{ $loop->iteration }}</td>
+    <td class="px-4 py-3 sans text-sm text-neutral-600 tabular-nums freeze-col freeze-col-2">
+        {{ $row->created_at ? \Carbon\Carbon::parse($row->created_at)->format('d/m/y') : '' }}
+    </td>
+    <td class="px-4 py-3 sans text-sm font-medium ink freeze-col freeze-col-3">
+        <div class="max-w-[200px] truncate" title="{{ $company }}">
+            {{ $company }}
+        </div>
+    </td>
+    <td class="px-4 py-3 sans text-sm text-neutral-700">
+        {{ $row->product }}
+    </td>
                                         @php
     // Prefer the JOIN alias from controller:
     $location = isset($row->location_name) ? (string) $row->location_name : '';

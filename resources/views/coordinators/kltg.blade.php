@@ -219,11 +219,21 @@
         }
 
         .ledger-table {
-            width: 100% !important;
-            font-size: 0.875rem !important;
-            border-collapse: separate !important;
-            border-spacing: 0 !important;
-        }
+    width: 100% !important;
+    font-size: 0.875rem !important;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+}
+.ledger-table tbody td {
+    padding: 1.25rem 1rem !important;
+    margin: 0 !important;
+    border-bottom: 1px solid #D1D5DB !important;
+    border-right: 1px solid #D1D5DB !important;
+    transition: all 150ms ease !important;
+    vertical-align: middle !important;
+    background: white !important;
+    box-sizing: border-box !important;  /* ⬅️ TAMBAHKAN ini */
+}
 
         .ledger-table thead th {
             padding: 1.25rem 1rem !important;
@@ -267,6 +277,10 @@
             background-color: #EBF8FF !important;
             border-color: #93C5FD !important;
         }
+
+        .ledger-table tbody tr:hover td[style*="position: sticky"] {
+    background-color: #EBF8FF !important;
+}
 
         .ledger-table tbody tr:last-child td {
             border-bottom: 2px solid #D1D5DB !important;
@@ -379,7 +393,7 @@
         }
 
         .col-company {
-            width: 200px;
+            width: 250px;
             min-width: 180px;
         }
 
@@ -866,11 +880,13 @@
                             <thead>
                                 <tr>
                                     <th class="col-no text-right caps-header"
-                                        style="background: #F3F4F6; border-bottom: 3px solid #D1D5DB; border-right: 2px solid #D1D5DB; padding: 1.25rem 1rem; font-weight: 700;">
-                                        No</th>
+    style="background: #F3F4F6; border-bottom: 3px solid #D1D5DB; border-right: 2px solid #D1D5DB; padding: 1.25rem 1rem; font-weight: 700;
+           position: sticky; left: 0; z-index: 12; box-shadow: 2px 0 0 rgba(209,213,219,1);">
+    No</th>
                                     <th class="col-date caps-header"
-                                        style="background: #F3F4F6; border-bottom: 3px solid #D1D5DB; border-right: 2px solid #D1D5DB; padding: 1.25rem 1rem; font-weight: 700;">
-                                        Date Created</th>
+    style="background: #F3F4F6; border-bottom: 3px solid #D1D5DB; border-right: 2px solid #D1D5DB; padding: 1.25rem 1rem; font-weight: 700;
+           position: sticky; left: 60px; z-index: 12; box-shadow: 2px 0 0 rgba(209,213,219,1);">
+    Date Created</th>
                                     <th class="col-company caps-header"
     style="background: #F3F4F6; border-bottom: 3px solid #D1D5DB; border-right: 2px solid #D1D5DB; padding: 1.25rem 1rem; font-weight: 700;
            position: sticky; left: 180px; z-index: 12; box-shadow: 2px 0 0 rgba(209,213,219,1);">
@@ -909,16 +925,16 @@
                             </thead>
                             <tbody>
                                 @foreach ($rows as $i => $r)
-                                    <tr style="transition: all 150ms ease;"
-                                        onmouseover="this.style.backgroundColor='#EBF8FF'"
-                                        onmouseout="this.style.backgroundColor='white'">
-                                        <td class="col-no text-right soft-ink font-medium tabular-nums"
-                                            style="padding: 1.25rem 1rem; border-bottom: 1px solid #D1D5DB; border-right: 1px solid #D1D5DB; background: white;">
-                                            {{ $i + 1 }}</td>
+                                   <tr style="transition: all 150ms ease;">
+                                      <td class="col-no text-right soft-ink font-medium tabular-nums"
+    style="padding: 1.25rem 1rem; border-bottom: 1px solid #D1D5DB; border-right: 1px solid #D1D5DB; background: white;
+           position: sticky; left: 0; z-index: 11; box-shadow: 2px 0 0 rgba(209,213,219,1);">
+    {{ $i + 1 }}</td>
                                         <td class="col-date ink font-medium tabular-nums"
-                                            style="padding: 1.25rem 1rem; border-bottom: 1px solid #D1D5DB; border-right: 1px solid #D1D5DB; background: white;">
-                                            {{ optional($r->date ?? null)->format('Y-m-d') ?? optional($r->created_at)->format('Y-m-d') }}
-                                        </td>
+    style="padding: 1.25rem 1rem; border-bottom: 1px solid #D1D5DB; border-right: 1px solid #D1D5DB; background: white;
+           position: sticky; left: 60px; z-index: 11; box-shadow: 2px 0 0 rgba(209,213,219,1);">
+    {{ optional($r->date ?? null)->format('Y-m-d') ?? optional($r->created_at)->format('Y-m-d') }}
+</td>
                                         <td class="col-company ink font-medium"
     style="padding: 1.25rem 1rem; border-bottom: 1px solid #D1D5DB; border-right: 1px solid #D1D5DB; background: white;
            position: sticky; left: 180px; z-index: 11; box-shadow: 2px 0 0 rgba(209,213,219,1);">
