@@ -285,16 +285,17 @@ Route::prefix('coordinator/outdoor')->middleware(['auth', 'permission:coordinato
         ->name('destroy');
 
     // Field update routes
+    // Allow users with proper role OR the specific permission to update inline fields
     Route::post('/update-field', [OutdoorCoordinatorController::class, 'updateField'])
-        ->middleware('permission:outdoor.edit')
+        ->middleware('role_or_permission:admin|superadmin|support|outdoor.edit')
         ->name('updateField');
 
     Route::post('/update-inline', [OutdoorCoordinatorController::class, 'updateInline'])
-        ->middleware('permission:outdoor.edit')
+        ->middleware('role_or_permission:admin|superadmin|support|outdoor.edit')
         ->name('updateInline');
 
     Route::post('/upsert', [OutdoorCoordinatorController::class, 'upsert'])
-        ->middleware('permission:outdoor.edit')
+        ->middleware('role_or_permission:admin|superadmin|support|outdoor.edit')
         ->name('upsert');
 
     // Data management routes
@@ -659,18 +660,21 @@ Route::middleware(['auth', 'permission:report.summary.export'])
 // ===============================================
 // OUTDOOR WHITEBOARD ROUTES
 // ===============================================
-Route::prefix('outdoor/whiteboard')->name('outdoor.whiteboard.')->group(function () {
-    // Views
+Route::prefix('outdoor/whiteboard')->name('outdoor.whiteboard.')->middleware(['web', 'auth'])->group(function () {
+    // Views - accessible to all authenticated users
     Route::get('/',           [OutdoorWhiteboardController::class, 'index'])->name('index');
     Route::get('/completed',  [OutdoorWhiteboardController::class, 'completed'])->name('completed');
-    // Mutations
-    Route::post('/upsert',         [OutdoorWhiteboardController::class, 'upsert'])->name('upsert');
-    Route::post('/mark-completed', [OutdoorWhiteboardController::class, 'markCompleted'])->name('markCompleted');
-    Route::post('/restore',        [OutdoorWhiteboardController::class, 'restore'])->name('restore');
-    // Export
+
+    // Mutations - only admin, superadmin, support can CRUD
+    Route::post('/upsert',         [OutdoorWhiteboardController::class, 'upsert'])->name('upsert')->middleware('role:admin|superadmin|support');
+    Route::post('/mark-completed', [OutdoorWhiteboardController::class, 'markCompleted'])->name('markCompleted')->middleware('role:admin|superadmin|support');
+    Route::post('/restore',        [OutdoorWhiteboardController::class, 'restore'])->name('restore')->middleware('role:admin|superadmin|support');
+
+    // Export - accessible to all authenticated users
     Route::get('/export/ledger', [OutdoorWhiteboardController::class, 'exportLedgerXlsx'])->name('export.ledger');
-    // Danger zone
-    Route::delete('/{whiteboard}', [OutdoorWhiteboardController::class, 'destroy'])->name('destroy');
+
+    // Danger zone - only admin, superadmin, support can delete
+    Route::delete('/{whiteboard}', [OutdoorWhiteboardController::class, 'destroy'])->name('destroy')->middleware('role:admin|superadmin|support');
 });
 
 Route::middleware(['auth'])->group(function () {

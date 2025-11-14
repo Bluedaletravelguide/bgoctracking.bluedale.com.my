@@ -113,36 +113,55 @@
         }
 
         /* Frozen columns styling */
-.freeze-col {
-    position: sticky;
-    background-color: white;
-    z-index: 20;
-}
+        .freeze-col {
+            position: sticky;
+            background-color: white;
+            z-index: 20;
+        }
 
-.freeze-col-1 {
-    left: 0;
-    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
-}
+        .freeze-col-1 {
+            left: 0;
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+        }
 
-.freeze-col-2 {
-    left: 48px; /* width of NO column */
-    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
-}
+        .freeze-col-2 {
+            left: 48px;
+            /* width of NO column */
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+        }
 
-.freeze-col-3 {
-    left: 168px; /* 48px (col-1) + 120px (col-2) */
-    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
-}
+        .freeze-col-3 {
+            left: 168px;
+            /* 48px (col-1) + 120px (col-2) */
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+        }
 
-thead .freeze-col {
-    z-index: 30;
-    background-color: #FAFAFA;
-}
+        thead .freeze-col {
+            z-index: 30;
+            background-color: #FAFAFA;
+            position: sticky;
+            top: 0;
+        }
 
+        thead .freeze-col-1 {
+            z-index: 31;
+            left: 0;
+        }
+
+        thead .freeze-col-2 {
+            z-index: 31;
+            left: 48px;
+        }
+
+        thead .freeze-col-3 {
+            z-index: 31;
+            left: 168px;
+        }
 
         /* Monthly grid specific styles */
         .monthly-input {
-            @apply h-10 text-xs rounded border border-neutral-200 focus:ring-1 focus:ring-[#4bbbed]/20 focus:border-[#4bbbed] transition-all duration-150;
+            @apply h-10 text-xs rounded border-2 border-black focus:ring-1 focus:ring-[#4bbbed]/20 focus:border-[#4bbbed] transition-all duration-150;
+            border-color: #000000 !important;
         }
 
         .monthly-input:hover {
@@ -394,20 +413,22 @@ thead .freeze-col {
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto">
+                    <div class="overflow-auto max-h-[calc(100vh-300px)]">
                         <table id="outdoorTable" class="min-w-[3250px] w-full">
                             <thead class="bg-neutral-50 sticky top-0 z-10">
-    <tr class="hairline border-b">
-        <th class="px-3 py-2 text-right w-12 freeze-col freeze-col-1">NO</th>
-        <th class="px-4 py-4 text-left table-header freeze-col freeze-col-2" style="min-width:120px;">
-            Date Created
-        </th>
-        <th class="px-4 py-4 text-left table-header freeze-col freeze-col-3" style="min-width:220px;">
-            Company
-        </th>
-        <th class="px-4 py-4 text-left table-header" style="min-width:160px;">
-            Product
-        </th>
+                                <tr class="hairline border-b">
+                                    <th class="px-3 py-2 text-right w-12 freeze-col freeze-col-1">NO</th>
+                                    <th class="px-4 py-4 text-left table-header freeze-col freeze-col-2"
+                                        style="min-width:120px;">
+                                        Date Created
+                                    </th>
+                                    <th class="px-4 py-4 text-left table-header freeze-col freeze-col-3"
+                                        style="min-width:220px;">
+                                        Company
+                                    </th>
+                                    <th class="px-4 py-4 text-left table-header" style="min-width:160px;">
+                                        Product
+                                    </th>
                                     <th class="px-4 py-4 text-left table-header" style="min-width:220px;">
                                         Site(s)
                                     </th>
@@ -444,44 +465,47 @@ thead .freeze-col {
                                     @endforeach
                                 </tr>
                             </thead>
-                            <tbody id="outdoorTbody" class="bg-white divide-y divide-neutral-200">
+                            <tbody id="outdoorTbody" class="bg-white divide-y-2 divide-neutral-800">
                                 @foreach ($rows as $index => $row)
                                     @php
-    $company = $row->company;
+                                        $company = $row->company;
 
-    // prefer outdoor_items dates; fall back to master_files only if OI is empty
-    $start = $row->oi_start ?? $row->mf_start ?? null;
-    $end   = $row->oi_end   ?? $row->mf_end   ?? null;
+                                        // prefer outdoor_items dates; fall back to master_files only if OI is empty
+                                        $start = $row->oi_start ?? ($row->mf_start ?? null);
+                                        $end = $row->oi_end ?? ($row->mf_end ?? null);
 
-    $startDisp = df($start);
-    $endDisp   = df($end);
-@endphp
+                                        $startDisp = df($start);
+                                        $endDisp = df($end);
+                                    @endphp
 
-                                    <tr class="hover:bg-neutral-50 hover-lift transition-all duration-150" data-idx="{{ $loop->index }}">
-    <td class="px-3 py-2 text-right tabular-nums freeze-col freeze-col-1">{{ $loop->iteration }}</td>
-    <td class="px-4 py-3 sans text-sm text-neutral-600 tabular-nums freeze-col freeze-col-2">
-        {{ $row->created_at ? \Carbon\Carbon::parse($row->created_at)->format('d/m/y') : '' }}
-    </td>
-    <td class="px-4 py-3 sans text-sm font-medium ink freeze-col freeze-col-3">
-        <div class="max-w-[200px] truncate" title="{{ $company }}">
-            {{ $company }}
-        </div>
-    </td>
-    <td class="px-4 py-3 sans text-sm text-neutral-700">
-        {{ $row->product }}
-    </td>
+                                    <tr class="hover:bg-neutral-50 hover-lift transition-all duration-150"
+                                        data-idx="{{ $loop->index }}">
+                                        <td class="px-3 py-2 text-right tabular-nums freeze-col freeze-col-1">
+                                            {{ $loop->iteration }}</td>
+                                        <td
+                                            class="px-4 py-3 sans text-sm text-neutral-600 tabular-nums freeze-col freeze-col-2">
+                                            {{ $row->created_at ? \Carbon\Carbon::parse($row->created_at)->format('d/m/y') : '' }}
+                                        </td>
+                                        <td class="px-4 py-3 sans text-sm font-medium ink freeze-col freeze-col-3">
+                                            <div class="max-w-[200px] truncate" title="{{ $company }}">
+                                                {{ $company }}
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 sans text-sm text-neutral-700">
+                                            {{ $row->product }}
+                                        </td>
                                         @php
-    // Prefer the JOIN alias from controller:
-    $location = isset($row->location_name) ? (string) $row->location_name : '';
+                                            // Prefer the JOIN alias from controller:
+                                            $location = isset($row->location_name) ? (string) $row->location_name : '';
 
-    // Fallback to Eloquent relation if not present:
-    if ($location === '' && isset($row->billboard)) {
-        $location = (string) ($row->billboard?->location?->name ?? '');
-    }
+                                            // Fallback to Eloquent relation if not present:
+                                            if ($location === '' && isset($row->billboard)) {
+                                                $location = (string) ($row->billboard?->location?->name ?? '');
+                                            }
 
-    // Final display (no site number, no district)
-    $siteDisplay = $location !== '' ? $location : '—';
-@endphp
+                                            // Final display (no site number, no district)
+                                            $siteDisplay = $location !== '' ? $location : '—';
+                                        @endphp
 
                                         <td class="px-4 py-3 sans text-sm text-neutral-700"
                                             title="{{ $siteDisplay }}">
@@ -560,6 +584,7 @@ thead .freeze-col {
                                                     <!-- Date input -->
                                                     <input type="date" value="{{ $savedDate }}"
                                                         class="w-full monthly-input text-xs tabular-nums"
+                                                        style="border-width: 1px !important; border-color: #000000 !important;"
                                                         data-master="{{ $row->id }}"
                                                         data-item="{{ $row->outdoor_item_id }}"
                                                         data-year="{{ $year }}"
@@ -668,6 +693,10 @@ thead .freeze-col {
             errorBadge.textContent = '';
         }
 
+        // Add saving state to indicate request is in progress
+        el.classList.remove('border-green-400', 'bg-green-50', 'border-[#d33831]', 'bg-red-50');
+        el.classList.add('border-[#f97316]', 'bg-orange-50');
+
         try {
             const res = await fetch("{{ route('outdoor.monthly.upsert') }}", {
                 method: "POST",
@@ -690,27 +719,36 @@ thead .freeze-col {
                 throw new Error(msg);
             }
 
-            // Success feedback
-            savedBadge?.classList.remove('hidden');
-
-            el.classList.remove('border-[#d33831]', 'bg-red-50');
+            // ✅ SUCCESS feedback - green highlight + checkmark
+            el.classList.remove('border-[#f97316]', 'bg-orange-50', 'border-[#d33831]', 'bg-red-50');
             el.classList.add('border-green-400', 'bg-green-50');
 
+            if (savedBadge) {
+                savedBadge.innerHTML =
+                    '<svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg> Saved';
+                savedBadge.classList.remove('hidden');
+            }
+
+            // Auto-dismiss success state
             setTimeout(() => {
                 savedBadge?.classList.add('hidden');
                 el.classList.remove('border-green-400', 'bg-green-50');
                 el.classList.add('border-neutral-200');
-            }, 1500);
+            }, 2000);
 
         } catch (e) {
-            // Error feedback
-            el.classList.remove('border-neutral-200');
+            // ❌ ERROR feedback - red highlight + alert with error message
+            el.classList.remove('border-[#f97316]', 'bg-orange-50', 'border-green-400', 'bg-green-50');
             el.classList.add('border-[#d33831]', 'bg-red-50');
-            if (errorBadge) {
-                errorBadge.textContent = e?.message || 'Save failed';
-                errorBadge.classList.remove('hidden');
-            }
-            setTimeout(() => el.classList.remove('bg-red-50'), 3000);
+
+            const errorMsg = e?.message || 'Save failed';
+            alert(errorMsg);
+
+            // Auto-dismiss error state
+            setTimeout(() => {
+                el.classList.remove('border-[#d33831]', 'bg-red-50');
+                el.classList.add('border-neutral-200');
+            }, 3000);
         }
     }
 

@@ -224,11 +224,14 @@
                                                 <td class="px-4 py-3 text-sm column-data" data-column="4">
                                                     <div class="space-y-2">
                                                         <input type="text" name="po_text"
-                                                            class="wb-field ledger-input w-36" placeholder="PO note..."
-                                                            value="{{ old('po_text', $wb?->po_text) }}">
+                                                            class="wb-field ledger-input w-36 border border-black rounded px-2 py-1"
+                                                            placeholder="PO note..."
+                                                            value="{{ old('po_text', $wb?->po_text) }}"
+                                                            @if (!$canEdit) readonly @endif>
                                                         <input type="date" name="po_date"
-                                                            class="wb-field ledger-input w-36"
-                                                            value="{{ old('po_date', $poDate) }}">
+                                                            class="wb-field ledger-input w-36 border border-black rounded px-2 py-1"
+                                                            value="{{ old('po_date', $poDate) }}"
+                                                            @if (!$canEdit) readonly @endif>
                                                     </div>
                                                 </td>
 
@@ -303,22 +306,26 @@
                                                 <!-- 9) Installation (ambil dari master_files.date) -->
                                                 <td class="px-4 py-3 text-sm column-data" data-column="9">
                                                     <input type="date" name="install_date"
-                                                        class="wb-field ledger-input w-36"
-                                                        value="{{ old('install_date', $installDate) }}">
+                                                        class="wb-field ledger-input w-36 border border-black rounded px-2 py-1"
+                                                        value="{{ old('install_date', $installDate) }}"
+                                                        @if (!$canEdit) readonly @endif>
                                                 </td>
 
                                                 <!-- 10) Dismantle (ambil dari master_files.date_finish) -->
                                                 <td class="px-4 py-3 text-sm column-data" data-column="10">
                                                     <input type="date" name="dismantle_date"
-                                                        class="wb-field ledger-input w-36"
-                                                        value="{{ old('dismantle_date', $dismantleDate) }}">
+                                                        class="wb-field ledger-input w-36 border border-black rounded px-2 py-1"
+                                                        value="{{ old('dismantle_date', $dismantleDate) }}"
+                                                        @if (!$canEdit) readonly @endif>
                                                 </td>
 
 
                                                 <!-- 11) Supplier -->
                                                 <td class="px-4 py-3 text-sm column-data" data-column="11">
                                                     <div class="space-y-2">
-                                                        <select name="contractor_id" class="wb-field ledger-input w-36">
+                                                        <select name="contractor_id"
+                                                            class="wb-field ledger-input w-36 border border-black rounded px-2 py-1"
+                                                            @if (!$canEdit) disabled @endif>
                                                             <option value="">Select Contractor</option>
                                                             @foreach ($contractors as $contractor)
                                                                 <option value="{{ $contractor->id }}"
@@ -328,8 +335,9 @@
                                                             @endforeach
                                                         </select>
                                                         <input type="date" name="supplier_date"
-                                                            class="wb-field ledger-input w-36"
-                                                            value="{{ old('supplier_date', $supplierDate) }}">
+                                                            class="wb-field ledger-input w-36 border border-black rounded px-2 py-1"
+                                                            value="{{ old('supplier_date', $supplierDate) }}"
+                                                            @if (!$canEdit) readonly @endif>
                                                     </div>
                                                 </td>
 
@@ -337,12 +345,14 @@
                                                 <td class="px-4 py-3 text-sm column-data" data-column="12">
                                                     <div class="space-y-2">
                                                         <input type="text" name="storage_text"
-                                                            class="wb-field ledger-input w-36"
+                                                            class="wb-field ledger-input w-36 border border-black rounded px-2 py-1"
                                                             placeholder="Storage note..."
-                                                            value="{{ old('storage_text', $wb?->storage_text) }}">
+                                                            value="{{ old('storage_text', $wb?->storage_text) }}"
+                                                            @if (!$canEdit) readonly @endif>
                                                         <input type="date" name="storage_date"
-                                                            class="wb-field ledger-input w-36"
-                                                            value="{{ old('storage_date', $storageDate) }}">
+                                                            class="wb-field ledger-input w-36 border border-black rounded px-2 py-1"
+                                                            value="{{ old('storage_date', $storageDate) }}"
+                                                            @if (!$canEdit) readonly @endif>
                                                     </div>
                                                 </td>
 
@@ -354,10 +364,18 @@
                                                         </div>
 
                                                         @if ($status === 'open')
-                                                            <button type="button"
-                                                                class="complete-btn text-xs px-3 py-1.5 rounded-full bg-[#22255b] text-white hover:bg-[#1a1e4a]">
-                                                                Mark Completed
-                                                            </button>
+                                                            @if ($canEdit)
+                                                                <button type="button"
+                                                                    class="complete-btn text-xs px-3 py-1.5 rounded-full bg-[#22255b] text-white hover:bg-[#1a1e4a]">
+                                                                    Mark Completed
+                                                                </button>
+                                                            @else
+                                                                <button type="button" disabled
+                                                                    class="text-xs px-3 py-1.5 rounded-full bg-gray-300 text-gray-500 cursor-not-allowed"
+                                                                    title="You don't have permission to edit">
+                                                                    Mark Completed
+                                                                </button>
+                                                            @endif
                                                         @else
                                                             <span
                                                                 class="ml-2 text-xs px-2 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 inline-block">
@@ -391,6 +409,11 @@
     </div>
 
     <script>
+        // Set up permission flag
+        window.OUTDOOR = {
+            canEdit: {{ $canEdit ? 'true' : 'false' }}
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -626,6 +649,17 @@
             document.addEventListener('change', (e) => {
                 const el = e.target;
                 if (!el.classList?.contains('wb-field')) return;
+
+                // Check permission
+                if (!window.OUTDOOR.canEdit) {
+                    e.preventDefault();
+                    alert(
+                        'You do not have permission to edit this page. Only Admin, Superadmin, and Support can make changes.'
+                    );
+                    el.value = el.dataset.originalValue || el.value;
+                    return;
+                }
+
                 const row = el.closest('tr[data-item][data-master]');
                 if (row) autosave(row);
             });
@@ -634,6 +668,15 @@
             document.addEventListener('click', async (e) => {
                 const btn = e.target.closest('.complete-btn');
                 if (!btn) return;
+
+                // Check permission
+                if (!window.OUTDOOR.canEdit) {
+                    alert(
+                        'You do not have permission to edit this page. Only Admin, Superadmin, and Support can make changes.'
+                    );
+                    e.preventDefault();
+                    return;
+                }
 
                 const row = btn.closest('tr[data-item][data-master]');
                 if (!row) return;

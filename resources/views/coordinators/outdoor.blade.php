@@ -42,7 +42,8 @@
         }
 
         .input {
-            @apply h-11 rounded-xl border-neutral-300 focus:ring-2 focus:ring-[#4bbbed] focus:border-transparent transition-all duration-150;
+            @apply h-11 rounded-xl border-2 border-black focus:ring-2 focus:ring-[#4bbbed] focus:border-transparent transition-all duration-150 px-3 py-2;
+            border-color: #000000 !important;
         }
 
         .tabular-nums {
@@ -79,7 +80,8 @@
 
         /* Input field styles */
         .field-input {
-            @apply h-10 rounded-lg border border-neutral-300 focus:ring-2 focus:ring-[#4bbbed] focus:border-transparent px-3 py-2 text-sm transition-all duration-150;
+            @apply h-10 rounded-lg border-2 border-black focus:ring-2 focus:ring-[#4bbbed] focus:border-transparent px-3 py-2 text-sm transition-all duration-150;
+            border-color: #000000 !important;
         }
 
         .field-input:hover {
@@ -105,7 +107,8 @@
         }
 
         .freeze-col-2 {
-            left: 80px; /* width of first column */
+            left: 80px;
+            /* width of first column */
             box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
         }
 
@@ -113,8 +116,28 @@
             z-index: 30;
             background-color: #FAFAFA;
         }
+
         .field-readonly {
             @apply bg-neutral-50 text-neutral-700 rounded-lg px-3 py-2 text-sm;
+        }
+
+        /* Sticky columns for horizontal scroll */
+        .sticky-col-1 {
+            @apply sticky;
+            left: 0;
+            background-color: inherit;
+            z-index: 10;
+        }
+
+        .sticky-col-2 {
+            @apply sticky;
+            left: 80px;
+            background-color: inherit;
+            z-index: 9;
+        }
+
+        .table-container {
+            overflow-x: auto;
         }
     </style>
 @endpush
@@ -290,12 +313,11 @@
                 {{-- Table Content --}}
                 <div class="overflow-x-auto">
                     <table id="outdoorTable" class="min-w-full">
-                       {{-- Table Headers --}}
-<thead class="bg-neutral-50 sticky top-0 z-10">
-    <tr class="hairline border-b">
-        <th class="px-4 py-4 table-header text-center min-w-[80px] w-[80px] freeze-col freeze-col-1">NO</th>
-        <th class="px-4 py-4 table-header min-w-[200px] w-[200px] freeze-col freeze-col-2">Company</th>
-        <th class="px-4 py-4 table-header min-w-[200px] w-[200px]">Person In Charge</th>
+                        {{-- Table Headers --}}
+                        <thead class="bg-neutral-50 sticky top-0 z-10">
+                            <tr class="hairline border-b">
+                                <th class="px-4 py-4 table-header text-center min-w-[80px] w-[80px] sticky-col-1">NO</th>
+                                <th class="px-4 py-4 table-header min-w-[200px] w-[200px] sticky-col-2">Company</th>
                                 <th class="px-4 py-4 table-header min-w-[200px] w-[200px]">Person In Charge</th>
                                 <th class="px-4 py-4 table-header min-w-[180px] w-[180px]">Product</th>
                                 <th class="px-4 py-4 table-header min-w-[180px] w-[180px]">Site</th>
@@ -350,17 +372,19 @@
                                         data-year="{{ (int) ($year ?? now()->year) }}"
                                         data-month="{{ $isMonth ? (int) $month : '' }}">
 
-                                      {{-- ID --}}
-<td class="bg-white hairline border-r px-4 py-4 text-center ink font-medium tabular-nums min-w-[80px] w-[80px] freeze-col freeze-col-1">
-    {{ $rows->firstItem() + $i }}
-</td>
+                                        {{-- ID --}}
+                                        <td
+                                            class="bg-white hairline border-r px-4 py-4 text-center ink font-medium tabular-nums min-w-[80px] w-[80px] sticky-col-1">
+                                            {{ $rows->firstItem() + $i }}
+                                        </td>
 
-{{-- Company --}}
-<td class="bg-white hairline border-r px-4 py-4 min-w-[200px] w-[200px] freeze-col freeze-col-2">
-    <div class="field-readonly font-medium truncate">
-        {{ $row->company ?? '—' }}
-    </div>
-</td>
+                                        {{-- Company --}}
+                                        <td
+                                            class="bg-white hairline border-r px-4 py-4 min-w-[200px] w-[200px] sticky-col-2">
+                                            <div class="field-readonly font-medium truncate">
+                                                {{ $row->company ?? '—' }}
+                                            </div>
+                                        </td>
 
                                         {{-- Person In Charge --}}
                                         <td class="bg-white hairline border-r px-4 py-4 min-w-[200px] w-[200px]">
@@ -377,13 +401,13 @@
                                         </td>
 
                                         {{-- Site (format: CODE - District, fallback ke road/district_council) --}}
-                                       @php
-    // Simplified: only show location name from locations table
-    $locName = trim((string) ($row->location_name ?? ''));
+                                        @php
+                                            // Simplified: only show location name from locations table
+                                            $locName = trim((string) ($row->location_name ?? ''));
 
-    // fallback if empty
-    $locationDisplay = $locName !== '' ? $locName : '—';
-@endphp
+                                            // fallback if empty
+                                            $locationDisplay = $locName !== '' ? $locName : '—';
+                                        @endphp
 
                                         <td class="bg-white hairline border-r px-4 py-4 min-w-[180px] w-[180px]">
                                             <div class="field-readonly truncate" title="{{ $locationDisplay }}">
@@ -400,13 +424,15 @@
                                                     value="{{ $row->payment ?? '' }}" data-id="{{ $trackingId }}"
                                                     data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}" data-field="payment"
-                                                    data-scope="{{ $scope }}" placeholder="note..." />
+                                                    data-scope="{{ $scope }}" placeholder="note..."
+                                                    @if (!$canEdit) readonly @endif />
                                                 {{-- date --}}
                                                 <input type="date" class="field-input w-44 tabular-nums outdoor-field"
                                                     value="{{ $row->payment_date ?? '' }}" data-id="{{ $trackingId }}"
                                                     data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}" data-field="payment_date"
-                                                    data-scope="{{ $scope }}" />
+                                                    data-scope="{{ $scope }}"
+                                                    @if (!$canEdit) readonly @endif />
                                             </div>
                                         </td>
 
@@ -417,12 +443,14 @@
                                                     value="{{ $row->material ?? '' }}" data-id="{{ $trackingId }}"
                                                     data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}" data-field="material"
-                                                    data-scope="{{ $scope }}" placeholder="note..." />
+                                                    data-scope="{{ $scope }}" placeholder="note..."
+                                                    @if (!$canEdit) readonly @endif />
                                                 <input type="date" class="field-input w-44 tabular-nums outdoor-field"
                                                     value="{{ $row->material_date ?? '' }}"
                                                     data-id="{{ $trackingId }}" data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}" data-field="material_date"
-                                                    data-scope="{{ $scope }}" />
+                                                    data-scope="{{ $scope }}"
+                                                    @if (!$canEdit) readonly @endif />
                                             </div>
                                         </td>
 
@@ -433,12 +461,14 @@
                                                     value="{{ $row->artwork ?? '' }}" data-id="{{ $trackingId }}"
                                                     data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}" data-field="artwork"
-                                                    data-scope="{{ $scope }}" placeholder="note..." />
+                                                    data-scope="{{ $scope }}" placeholder="note..."
+                                                    @if (!$canEdit) readonly @endif />
                                                 <input type="date" class="field-input w-44 tabular-nums outdoor-field"
                                                     value="{{ $row->artwork_date ?? '' }}" data-id="{{ $trackingId }}"
                                                     data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}" data-field="artwork_date"
-                                                    data-scope="{{ $scope }}" />
+                                                    data-scope="{{ $scope }}"
+                                                    @if (!$canEdit) readonly @endif />
                                             </div>
                                         </td>
 
@@ -450,12 +480,14 @@
                                                     data-id="{{ $trackingId }}" data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}"
                                                     data-field="received_approval_note" data-scope="{{ $scope }}"
-                                                    placeholder="note..." />
+                                                    placeholder="note..."
+                                                    @if (!$canEdit) readonly @endif />
                                                 <input type="date" class="field-input w-44 tabular-nums outdoor-field"
                                                     value="{{ $row->received_approval ?? '' }}"
                                                     data-id="{{ $trackingId }}" data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}" data-field="received_approval"
-                                                    data-scope="{{ $scope }}" />
+                                                    data-scope="{{ $scope }}"
+                                                    @if (!$canEdit) readonly @endif />
                                             </div>
                                         </td>
 
@@ -467,12 +499,14 @@
                                                     data-id="{{ $trackingId }}" data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}"
                                                     data-field="sent_to_printer_note" data-scope="{{ $scope }}"
-                                                    placeholder="note..." />
+                                                    placeholder="note..."
+                                                    @if (!$canEdit) readonly @endif />
                                                 <input type="date" class="field-input w-44 tabular-nums outdoor-field"
                                                     value="{{ $row->sent_to_printer ?? '' }}"
                                                     data-id="{{ $trackingId }}" data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}" data-field="sent_to_printer"
-                                                    data-scope="{{ $scope }}" />
+                                                    data-scope="{{ $scope }}"
+                                                    @if (!$canEdit) readonly @endif />
                                             </div>
                                         </td>
 
@@ -484,12 +518,14 @@
                                                     data-id="{{ $trackingId }}" data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}"
                                                     data-field="collection_printer_note" data-scope="{{ $scope }}"
-                                                    placeholder="note..." />
+                                                    placeholder="note..."
+                                                    @if (!$canEdit) readonly @endif />
                                                 <input type="date" class="field-input w-44 tabular-nums outdoor-field"
                                                     value="{{ $row->collection_printer ?? '' }}"
                                                     data-id="{{ $trackingId }}" data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}" data-field="collection_printer"
-                                                    data-scope="{{ $scope }}" />
+                                                    data-scope="{{ $scope }}"
+                                                    @if (!$canEdit) readonly @endif />
                                             </div>
                                         </td>
 
@@ -500,12 +536,14 @@
                                                     value="{{ $row->installation_note ?? '' }}"
                                                     data-id="{{ $trackingId }}" data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}" data-field="installation_note"
-                                                    data-scope="{{ $scope }}" placeholder="note..." />
+                                                    data-scope="{{ $scope }}" placeholder="note..."
+                                                    @if (!$canEdit) readonly @endif />
                                                 <input type="date" class="field-input w-44 tabular-nums outdoor-field"
                                                     value="{{ $row->installation ?? '' }}" data-id="{{ $trackingId }}"
                                                     data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}" data-field="installation"
-                                                    data-scope="{{ $scope }}" />
+                                                    data-scope="{{ $scope }}"
+                                                    @if (!$canEdit) readonly @endif />
                                             </div>
                                         </td>
 
@@ -516,12 +554,14 @@
                                                     value="{{ $row->dismantle_note ?? '' }}"
                                                     data-id="{{ $trackingId }}" data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}" data-field="dismantle_note"
-                                                    data-scope="{{ $scope }}" placeholder="note..." />
+                                                    data-scope="{{ $scope }}" placeholder="note..."
+                                                    @if (!$canEdit) readonly @endif />
                                                 <input type="date" class="field-input w-44 tabular-nums outdoor-field"
                                                     value="{{ $row->dismantle ?? '' }}" data-id="{{ $trackingId }}"
                                                     data-mf="{{ $row->master_file_id }}"
                                                     data-oi="{{ $row->outdoor_item_id }}" data-field="dismantle"
-                                                    data-scope="{{ $scope }}" />
+                                                    data-scope="{{ $scope }}"
+                                                    @if (!$canEdit) readonly @endif />
                                             </div>
                                         </td>
                                     </tr>
@@ -561,6 +601,11 @@
 
 @push('scripts')
     <script>
+        // Set up permission flag
+        window.OUTDOOR_COORDINATOR = {
+            canEdit: {{ $canEdit ? 'true' : 'false' }}
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             const token = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
@@ -631,6 +676,12 @@
 
             async function saveField(element) {
                 if (!element.classList?.contains('outdoor-field')) return;
+
+                // Check permission - silently return if no edit access
+                if (!window.OUTDOOR_COORDINATOR.canEdit) {
+                    return;
+                }
+
                 if (inflight.has(element)) return;
                 inflight.add(element);
 
@@ -769,6 +820,7 @@
                         console.error('Save failed:', msg, {
                             payload
                         });
+                        alert('Save failed: no permission to update record or server error.');
                         showSaveIndicator(element, 'error');
                         element.classList.add('border-[#d33831]', 'bg-red-50');
                         setTimeout(() => {
@@ -807,6 +859,22 @@
 
             document.addEventListener('blur', e => saveField(e.target), true);
             document.addEventListener('change', e => saveField(e.target));
+
+            // Prevent Enter key from submitting or navigating away when focused
+            // inside an inline field. This stops accidental GET navigations to
+            // the upsert endpoint when users press Enter.
+            document.addEventListener('keydown', function(e) {
+                const target = e.target;
+                if (!target) return;
+                if (e.key === 'Enter' && target.classList && target.classList.contains('outdoor-field')) {
+                    e.preventDefault();
+                    try {
+                        saveField(target);
+                    } catch (err) {
+                        console.error('saveField error on Enter', err);
+                    }
+                }
+            }, true);
 
             // Disable "Active this month" when Month = All
             const selMonth = document.getElementById('filterMonth');
