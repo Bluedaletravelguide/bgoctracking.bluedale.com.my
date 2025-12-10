@@ -123,6 +123,10 @@ Route::prefix('masterfile')->middleware(['web', 'auth'])->name('masterfile.')->g
         ->middleware('permission:export.run')
         ->name('exportXlsx');
 
+    Route::get('/preview-xlsx', [MasterFileController::class, 'exportPreview'])
+        ->middleware('permission:export.run')
+        ->name('exportPreview');
+
     Route::get('/template', [MasterFileController::class, 'downloadTemplate'])
         ->middleware('permission:export.run')
         ->name('template');

@@ -486,6 +486,7 @@ class MasterFileController extends Controller
         $completedJobs = MasterFile::where('status', 'completed')->count();
         $ongoingJobs = MasterFile::where('status', 'ongoing')->count();
         $pendingJobs = MasterFile::where('status', 'pending')->count();
+        $deletedJobs = MasterFile::where('status', 'deleted')->count();
 
         // Get confirmation links data grouped by year
         $grouped = MasterFile::whereNotNull('date')
@@ -549,6 +550,7 @@ class MasterFileController extends Controller
             'completedJobs',
             'ongoingJobs',
             'pendingJobs',
+            'deletedJobs',
             'grouped',
             'recentJobs',
             'monthlyByCategory', // 🔧 UPDATED: Pass grouped data instead of flat data
@@ -1828,6 +1830,8 @@ class MasterFileController extends Controller
     }
 
 
+
+
     public function exportXlsx(Request $request): StreamedResponse
     {
         // ----- Build select list safely -----
@@ -1843,19 +1847,19 @@ class MasterFileController extends Controller
 
         $select = array_merge($select, [
             'company',
-            'client',                 // Person In Charge
             'product',
+            'job_number', // Assuming this maps to 'job'
+            'amount',
             'month',
-            'date as start_date',
-            'date_finish as end_date',
+            'date as start_date', // Assuming 'date' is the start date
+            'date_finish as end_date', // Assuming 'date_finish' is the end date
             'duration',
             'status',
-            'job_number',
             'artwork',
             'traffic',
             'invoice_date',
             'invoice_number',
-            'product_category',
+            'client', // Assuming this is the person in charge
         ]);
 
         // Add email/amount/contact_number safely
@@ -1874,6 +1878,12 @@ class MasterFileController extends Controller
         } else {
             $select[] = DB::raw('NULL as contact_number');
         }
+        // Assuming 'remarks' exists
+        if (Schema::hasColumn('master_files', 'remarks')) {
+            $select[] = 'remarks';
+        } else {
+            $select[] = DB::raw('NULL as remarks');
+        }
 
         $q = MasterFile::query()->select($select);
 
@@ -1888,23 +1898,24 @@ class MasterFileController extends Controller
         $headings = [
             'No',
             'Date Created',
-            'Sales Person',
             'Company Name',
-            'Person In Charge',
-            'Email',
-            'Contact Number',
-            'Amount',
             'Product',
+            'Amount',
             'Month',
             'Start Date',
             'End Date',
             'Duration',
+            'Job', // Mapped from product_category
             'Status',
-            'Job',
             'Artwork',
             'Traffic',
             'Invoice Date',
-            'Invoice Number',
+            'Invoice No', // Mapped from invoice_number
+            'Sales Person',
+            'Person In Charge', // Mapped from client
+            'Email',
+            'Contact', // Mapped from contact_number
+            'Remarks',
         ];
         $lastColLetter = Coordinate::stringFromColumnIndex(count($headings));
 
@@ -1955,25 +1966,26 @@ class MasterFileController extends Controller
             };
 
             // Order matches $headings
-            $put($r - 2);
-            $put($row->created_at ? Carbon::parse($row->created_at)->format('d/m/y') : '');
-            $put($row->sales_person ?? '');          // Sales Person
-            $put($row->company);
-            $put($row->client);
-            $put($row->email ?? '');
-            $put($row->contact_number ?? '');
-            $put($row->amount ?? '');
-            $put($row->product);
-            $put($row->month);
-            $put($row->start_date ? Carbon::parse($row->start_date)->format('d/m/y') : '');
-            $put($row->end_date ? Carbon::parse($row->end_date)->format('d/m/y') : '');
-            $put($row->duration);
-            $put($row->status);
-            $put($row->job_number);
-            $put($row->artwork);
-            $put($row->traffic);
-            $put($row->invoice_date ? Carbon::parse($row->invoice_date)->format('d/m/y') : '');
-            $put($row->invoice_number);
+            $put($r - 2); // No
+            $put($row->created_at ? Carbon::parse($row->created_at)->format('d/m/y') : ''); // Date Created
+            $put($row->company); // Company Name
+            $put($row->product); // Product
+            $put($row->amount ?? ''); // Amount
+            $put($row->month); // Month
+            $put($row->start_date ? Carbon::parse($row->start_date)->format('d/m/y') : ''); // Start Date
+            $put($row->end_date ? Carbon::parse($row->end_date)->format('d/m/y') : ''); // End Date
+            $put($row->duration); // Duration
+            $put($row->job_number ?? ''); // Job (mapped from product_category)
+            $put($row->status); // Status
+            $put($row->artwork); // Artwork
+            $put($row->traffic); // Traffic
+            $put($row->invoice_date ? Carbon::parse($row->invoice_date)->format('d/m/y') : ''); // Invoice Date
+            $put($row->invoice_number); // Invoice No
+            $put($row->sales_person ?? ''); // Sales Person
+            $put($row->client ?? ''); // Person In Charge
+            $put($row->email ?? ''); // Email
+            $put($row->contact_number ?? ''); // Contact
+            $put($row->remarks ?? ''); // Remarks
             $r++;
         }
 
@@ -2002,6 +2014,163 @@ class MasterFileController extends Controller
             $ss->disconnectWorksheets();
         }, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    // Add this new method to your controller
+    public function exportPreview(Request $request)
+    {
+        // Build the same query as your export but limit to first 10 records for preview
+        $select = [
+            'created_at',
+        ];
+        if (Schema::hasColumn('master_files', 'sales_person')) {
+            $select[] = 'sales_person';
+        } else {
+            $select[] = DB::raw('NULL as sales_person');
+        }
+
+        $select = array_merge($select, [
+            'company',
+            'product',
+            'job_number',
+            'amount',
+            'month',
+            'date as start_date',
+            'date_finish as end_date',
+            'duration',
+            'status',
+            'artwork',
+            'traffic',
+            'invoice_date',
+            'invoice_number',
+            'client',
+        ]);
+
+        if (Schema::hasColumn('master_files', 'email')) {
+            $select[] = 'email';
+        } else {
+            $select[] = DB::raw('NULL as email');
+        }
+        if (Schema::hasColumn('master_files', 'amount')) {
+            $select[] = 'amount';
+        } else {
+            $select[] = DB::raw('NULL as amount');
+        }
+        if (Schema::hasColumn('master_files', 'contact_number')) {
+            $select[] = 'contact_number';
+        } else {
+            $select[] = DB::raw('NULL as contact_number');
+        }
+        if (Schema::hasColumn('master_files', 'remarks')) {
+            $select[] = 'remarks';
+        } else {
+            $select[] = DB::raw('NULL as remarks');
+        }
+
+        $q = MasterFile::query()->select($select);
+
+        // Apply the same filters as the export
+        if ($request->filled('search') && !empty(trim($request->get('search')))) {
+            $searchTerm = trim($request->get('search'));
+            $q->where(function ($query) use ($searchTerm) {
+                $query->where('company', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('product', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('status', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('client', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('month', 'LIKE', '%' . $searchTerm . '%');
+            });
+        }
+
+        if ($request->filled('status') && !empty(trim($request->get('status')))) {
+            $q->where('status', trim($request->get('status')));
+        }
+
+        if ($request->filled('month') && !empty(trim($request->get('month')))) {
+            $q->where('month', trim($request->get('month')));
+        }
+
+        if ($request->filled('product_category')) {
+            $hasPC = Schema::hasColumn('master_files', 'product_category');
+            if ($hasPC) {
+                $q->whereIn('product', match ($request->product_category) {
+                    'Outdoor' => ['HM', 'TB', 'TTM', 'BB', 'Star', 'Flyers', 'Bunting', 'Signages', 'Newspaper'],
+                    'Media' => ['FB IG Ad'],
+                    'KLTG' => ['KLTG', 'KLTG listing', 'KLTG quarter page', 'NP'],
+                    default => []
+                });
+            } else {
+                $cat = strtolower($request->product_category);
+                if ($cat === 'outdoor') {
+                    $q->where(function ($query) {
+                        $query->whereIn('product', ['HM', 'TB', 'TTM', 'BB', 'Star', 'Flyers', 'Bunting', 'Signages', 'Newspaper'])
+                            ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%']);
+                    });
+                } elseif ($cat === 'kltg') {
+                    $q->whereRaw('LOWER(product) LIKE ?', ['%kltg%']);
+                } elseif ($cat === 'media') {
+                    $q->where(function ($query) {
+                        $query->whereRaw('LOWER(product) LIKE ?', ['%media%'])
+                            ->orWhereIn('product', ['FB IG Ad', 'Facebook', 'Instagram']);
+                    });
+                }
+            }
+        }
+
+        // Get total count for the message
+        $totalRecords = $q->count();
+
+        // Get first 10 records for preview
+        $previewData = $q->orderByDesc('created_at')->limit(20)->get();
+
+        return response()->json([
+            'headings' => [
+                'No',
+                'Date Created',
+                'Company Name',
+                'Product',
+                'Amount',
+                'Month',
+                'Start Date',
+                'End Date',
+                'Duration',
+                'Job',
+                'Status',
+                'Artwork',
+                'Traffic',
+                'Invoice Date',
+                'Invoice No',
+                'Sales Person',
+                'Person In Charge',
+                'Email',
+                'Contact',
+                'Remarks',
+            ],
+            'data' => $previewData->map(function ($row, $index) {
+                return [
+                    $index + 1,
+                    $row->created_at ? Carbon::parse($row->created_at)->format('d/m/y') : '',
+                    $row->company,
+                    $row->product,
+                    $row->amount ?? '',
+                    $row->month,
+                    $row->start_date ? Carbon::parse($row->start_date)->format('d/m/y') : '',
+                    $row->end_date ? Carbon::parse($row->end_date)->format('d/m/y') : '',
+                    $row->duration,
+                    $row->job_number ?? '',
+                    $row->status,
+                    $row->artwork,
+                    $row->traffic,
+                    $row->invoice_date ? Carbon::parse($row->invoice_date)->format('d/m/y') : '',
+                    $row->invoice_number,
+                    $row->sales_person ?? '',
+                    $row->client ?? '',
+                    $row->email ?? '',
+                    $row->contact_number ?? '',
+                    $row->remarks ?? '',
+                ];
+            })->toArray(),
+            'total_records' => $totalRecords
         ]);
     }
 
@@ -2743,6 +2912,7 @@ class MasterFileController extends Controller
                 'completed' => MasterFile::where('status', 'completed')->count(),
                 'ongoing' => MasterFile::where('status', 'ongoing')->count(),
                 'pending' => MasterFile::where('status', 'pending')->count(),
+                'deleted' => MasterFile::where('status', 'deleted')->count(),
                 'recent' => MasterFile::orderBy('created_at', 'desc')->limit(5)->get()
             ];
             return response()->json($stats);
@@ -2892,7 +3062,8 @@ class MasterFileController extends Controller
     public function destroy($id)
     {
         $file = MasterFile::findOrFail($id);
-        $file->delete();
+        $file->status = 'deleted'; // or whatever status field you use to mark as deleted
+        $file->save();
 
         return redirect()->route('masterfile.index')
             ->with('success', 'Record deleted successfully.');

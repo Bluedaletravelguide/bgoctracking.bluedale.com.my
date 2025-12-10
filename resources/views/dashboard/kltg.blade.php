@@ -82,16 +82,16 @@
 
         <!-- Main Content -->
         <div class="px-6 py-6 space-y-6">
-
             <!-- Advanced Filters Card -->
             <div class="bg-white rounded-2xl border border-neutral-200/70 shadow-sm">
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-6">
                         <div>
-                            <h3 class="font-serif text-lg ink font-medium">Advanced Filters</h3>
+                            <h3 class="font-serif text-lg font-medium text-gray-900">Advanced Filters</h3>
                             <p class="text-sm text-neutral-600 mt-1">Refine your view with precision</p>
                         </div>
-                        <button id="clear-filters" class="btn-ghost text-sm">
+                        <button id="clear-filters"
+                            class="btn-ghost text-sm flex items-center gap-1 hover:text-red-600 transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M6 18L18 6M6 6l12 12" />
@@ -100,110 +100,280 @@
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        <!-- Month Filter (client-side visual filter only) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                        <!-- Month Filter -->
                         <div class="space-y-2">
-                            <label for="filter-month" class="header-label">Month</label>
+                            <label for="filter-month"
+                                class="header-label text-sm font-medium text-gray-700 block">Month</label>
                             @php $mSel = (string)request('filter_month', ''); @endphp
-                            <select id="filter-month" class="form-input">
+                            <select id="filter-month"
+                                class="form-input w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                                 <option value="" {{ $mSel === '' ? 'selected' : '' }}>All Months</option>
                                 @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $m)
                                     <option value="{{ $m }}" {{ $mSel === $m ? 'selected' : '' }}>
-                                        {{ $m }}</option>
+                                        {{ substr($m, 0, 3) }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
 
+                        <!-- Company Filter -->
                         <div class="space-y-2">
-                            <label for="filter-company" class="header-label">Company</label>
+                            <label for="filter-company"
+                                class="header-label text-sm font-medium text-gray-700 block">Company</label>
                             @php $cSel = (string)request('filter_company', ''); @endphp
-                            <select id="filter-company" class="form-input">
+                            <select id="filter-company"
+                                class="form-input w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                                 <option value="" {{ $cSel === '' ? 'selected' : '' }}>All Companies</option>
-                                @if(isset($outdoorCompanies))
+                                @if (isset($outdoorCompanies))
                                     @foreach ($outdoorCompanies as $company)
-                                        <option value="{{ $company }}" {{ $cSel === $company ? 'selected' : '' }}>
-                                            {{ $company }}
+                                        <option value="{{ $company }}"
+                                            {{ $cSel === $company ? 'selected' : '' }}>
+                                            {{ strlen($company) > 20 ? substr($company, 0, 20) . '...' : $company }}
                                         </option>
                                     @endforeach
                                 @endif
                             </select>
                         </div>
 
-                        {{-- Server-side Year Switch (authoritative) --}}
-                        <form method="GET" action="{{ route('kltg.index') }}" class="flex items-center gap-2">
-                            <label for="active-year" class="text-sm text-neutral-600">Year</label>
-                            <select id="active-year" name="year" class="form-input" onchange="this.form.submit()">
-                                @php
-                                    $yNow = now('Asia/Kuala_Lumpur')->year;
-                                    $years = range($yNow - 2, $yNow + 3);
-                                    $activeYear = isset($activeYear) ? (int) $activeYear : (int) request('year', $yNow);
-                                @endphp
-                                @foreach ($years as $y)
-                                    <option value="{{ $y }}"
-                                        {{ $activeYear === (int) $y ? 'selected' : '' }}>{{ $y }}</option>
-                                @endforeach
+                        <!-- Status Filter -->
+                        <div class="space-y-2">
+                            <label for="filter-status"
+                                class="header-label text-sm font-medium text-gray-700 block">Status</label>
+                            @php $sSel = (string)request('filter_status', ''); @endphp
+                            <select id="filter-status"
+                                class="form-input w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                <option value="" {{ $sSel === '' ? 'selected' : '' }}>All Status</option>
+                                <option value="active" {{ $sSel === 'active' ? 'selected' : '' }}>Active</option>
+                                <option value="pending" {{ $sSel === 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="completed" {{ $sSel === 'completed' ? 'selected' : '' }}>Completed
+                                </option>
+                                <option value="cancelled" {{ $sSel === 'cancelled' ? 'selected' : '' }}>Cancelled
+                                </option>
                             </select>
-                            {{-- preserve other filters on year change --}}
-                            @foreach (request()->except(['year', '_token']) as $k => $v)
-                                @if (is_array($v))
-                                    @foreach ($v as $vv)
-                                        <input type="hidden" name="{{ $k }}[]"
-                                            value="{{ $vv }}">
-                                    @endforeach
-                                @elseif($v !== '')
-                                    <input type="hidden" name="{{ $k }}" value="{{ $v }}">
-                                @endif
-                            @endforeach
-                        </form>
+                        </div>
+
+                        <!-- Date Range Filter -->
+                        <div class="space-y-2">
+                            <label for="filter-date-from"
+                                class="header-label text-sm font-medium text-gray-700 block">Date From</label>
+                            <input type="date" id="filter-date-from"
+                                class="form-input w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                value="{{ request('filter_date_from', '') }}">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="filter-date-to"
+                                class="header-label text-sm font-medium text-gray-700 block">Date To</label>
+                            <input type="date" id="filter-date-to"
+                                class="form-input w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                value="{{ request('filter_date_to', '') }}">
+                        </div>
+
+                        <!-- Search Filter -->
+                        <div class="space-y-2">
+                            <label for="filter-search"
+                                class="header-label text-sm font-medium text-gray-700 block">Search</label>
+                            <input type="text" id="filter-search"
+                                class="form-input w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                placeholder="Search..." value="{{ request('filter_search', '') }}">
+                        </div>
                     </div>
 
-                    <!-- Active Filter Chips -->
-                    <div id="filter-summary" class="mt-4 hidden">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="header-label">Active:</span>
-                            <div id="active-filters-chips" class="flex flex-wrap gap-2"></div>
+                    <!-- Year Switcher & Apply Button -->
+                    <div class="mt-6 pt-4 border-t border-neutral-100">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <label for="active-year" class="text-sm text-neutral-600 font-medium">Select
+                                    Year</label>
+                                <select id="active-year"
+                                    class="form-input border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                    @php
+                                        $yNow = now('Asia/Kuala_Lumpur')->year;
+                                        $years = range($yNow - 2, $yNow + 3);
+                                        $activeYear = isset($activeYear)
+                                            ? (int) $activeYear
+                                            : (int) request('year', $yNow);
+                                    @endphp
+                                    @foreach ($years as $y)
+                                        <option value="{{ $y }}"
+                                            {{ $activeYear === (int) $y ? 'selected' : '' }}>{{ $y }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <button id="apply-filters"
+                                class="btn-primary px-6 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm">
+                                Apply Filters
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- Optional: keep filter-year synced with server year --}}
         <script>
-            document.getElementById('filter-year')?.addEventListener('change', (e) => {
-                const params = new URLSearchParams(window.location.search);
-                const v = e.target.value;
-                if (v) params.set('year', v);
-                else params.delete('year');
-                // optionally preserve other filters:
-                window.location = "{{ route('kltg.index') }}?" + params.toString();
+            document.addEventListener('DOMContentLoaded', function() {
+                const clearBtn = document.getElementById('clear-filters');
+                const applyBtn = document.getElementById('apply-filters');
+                const yearSelect = document.getElementById('active-year');
+
+                // Debounce function for search input
+                let searchTimeout;
+                const searchInput = document.getElementById('filter-search');
+                if (searchInput) {
+                    searchInput.addEventListener('input', function() {
+                        clearTimeout(searchTimeout);
+                        searchTimeout = setTimeout(() => {
+                            applyFilters();
+                        }, 500); // 500ms delay after user stops typing
+                    });
+                }
+
+                // Add auto-apply for date range inputs
+                const dateFromInput = document.getElementById('filter-date-from');
+                const dateToInput = document.getElementById('filter-date-to');
+
+                if (dateFromInput) {
+                    dateFromInput.addEventListener('change', function() {
+                        applyFilters();
+                    });
+                }
+
+                if (dateToInput) {
+                    dateToInput.addEventListener('change', function() {
+                        applyFilters();
+                    });
+                }
+
+                // Auto-apply for year selection
+                if (yearSelect) {
+                    yearSelect.addEventListener('change', function() {
+                        applyFilters();
+                    });
+                }
+
+                // Apply filters button functionality
+                applyBtn?.addEventListener('click', applyFilters);
+
+                // Clear all filters
+                clearBtn?.addEventListener('click', function() {
+                    // Reset all filter inputs
+                    const month = document.getElementById('filter-month');
+                    const company = document.getElementById('filter-company');
+                    const status = document.getElementById('filter-status');
+                    const dateFrom = document.getElementById('filter-date-from');
+                    const dateTo = document.getElementById('filter-date-to');
+                    const search = document.getElementById('filter-search');
+                    const year = document.getElementById('active-year');
+
+                    if (month) month.value = '';
+                    if (company) company.value = '';
+                    if (status) status.value = '';
+                    if (dateFrom) dateFrom.value = '';
+                    if (dateTo) dateTo.value = '';
+                    if (search) search.value = '';
+                    if (year) year.value = new Date().getFullYear(); // Reset to current year
+
+                    applyFilters();
+                });
+
+                // Apply filters function
+                function applyFilters() {
+                    const params = new URLSearchParams(window.location.search);
+
+                    // Add all filter values
+                    const month = document.getElementById('filter-month')?.value;
+                    const company = document.getElementById('filter-company')?.value;
+                    const status = document.getElementById('filter-status')?.value;
+                    const dateFrom = document.getElementById('filter-date-from')?.value;
+                    const dateTo = document.getElementById('filter-date-to')?.value;
+                    const search = document.getElementById('filter-search')?.value;
+                    const year = document.getElementById('active-year')?.value;
+
+                    // Set parameters (or delete if empty)
+                    setParam(params, 'filter_month', month);
+                    setParam(params, 'filter_company', company);
+                    setParam(params, 'filter_status', status);
+                    setParam(params, 'filter_date_from', dateFrom);
+                    setParam(params, 'filter_date_to', dateTo);
+                    setParam(params, 'filter_search', search);
+                    setParam(params, 'year', year);
+
+                    // Navigate with new parameters
+                    window.location = window.location.pathname + '?' + params.toString();
+                }
+
+                // Helper function to set/remove parameters
+                function setParam(params, key, value) {
+                    if (value && value !== '') {
+                        params.set(key, value);
+                    } else {
+                        params.delete(key);
+                    }
+                }
+
+                // Allow Enter key to apply filters (except in search input)
+                document.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && e.target.id !== 'filter-search') {
+                        applyFilters();
+                    }
+                });
             });
+
+            // Global function for removing individual filters
+            function removeFilter(key) {
+                const params = new URLSearchParams(window.location.search);
+                params.delete(key);
+                window.location = window.location.pathname + '?' + params.toString();
+            }
         </script>
 
 
         <!-- Data Table Card -->
-        <div class="bg-white rounded-2xl border border-neutral-200/70 shadow-sm overflow-hidden">
+        <div class="bg-white rounded-2xl border border-black shadow-sm overflow-hidden">
             <!-- Table Container -->
             <div class="overflow-x-auto" style="max-height: 75vh;">
-                <table class="min-w-[5500px] w-full text-sm border-collapse">
+                <table class="min-w-[5500px] w-full text-sm border-collapse border border-black">
                     <!-- Sticky Header (atas saja) -->
-                    <thead class="sticky top-0 z-20 bg-white">
+                    <thead class="sticky top-0 z-20 bg-blue-600">
                         <tr class="bg-neutral-50/80">
-                            <th class="hairline px-4 py-3 header-label whitespace-nowrap text-center">No</th>
-                            <th class="hairline px-4 py-3 header-label whitespace-nowrap text-center">Created At</th>
-                            <th class="hairline px-4 py-3 header-label whitespace-nowrap text-center">Month</th>
-                            <th class="hairline px-4 py-3 header-label whitespace-nowrap text-left sticky left-0 z-30 bg-white shadow-[2px_0_0_rgba(0,0,0,0.06)] min-w-[220px]">
-    Company
-</th>
-                            <th class="hairline px-4 py-3 header-label whitespace-nowrap text-center">Product</th>
-                            <th class="hairline px-4 py-3 header-label whitespace-nowrap text-center">Publication</th>
-                            <th class="hairline px-4 py-3 header-label whitespace-nowrap text-center">Edition</th>
-                            <th class="hairline px-4 py-3 header-label whitespace-nowrap text-center">Status</th>
-                            <th class="hairline px-4 py-3 header-label whitespace-nowrap text-center">Start</th>
-                            <th class="hairline px-4 py-3 header-label whitespace-nowrap text-center">End</th>
+                            <th
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base ink">
+                                No</th>
+                            <th
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base ink">
+                                Created At</th>
+                            <th
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base ink">
+                                Month</th>
+                            <th
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-left sticky left-0 z-30 bg-blue-200 min-w-[220px] font-bold text-base ink">
+                                Company
+                            </th>
+                            <th
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base min-w-32 ink">
+                                Product</th>
+                            <th
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base min-w-32 ink">
+                                Publication</th>
+                            <th
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base min-w-32 ink">
+                                Edition</th>
+                            <th
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base ink">
+                                Status</th>
+                            <th
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base ink">
+                                Start</th>
+                            <th
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base ink">
+                                End</th>
 
                             @for ($m = 1; $m <= 12; $m++)
-                                <th class="px-4 py-3 text-center hairline bg-neutral-50/60 header-label min-w-[900px]">
+                                <th
+                                    class="border border-black px-4 py-3 text-center bg-blue-200 header-label min-w-[900px] ink font-bold text-base">
                                     {{ \Carbon\Carbon::create()->startOfYear()->month($m)->format('F') }}
                                 </th>
                             @endfor
@@ -213,7 +383,7 @@
                     <tbody>
                         @if (isset($rows) && count($rows) > 0)
                             @foreach ($rows as $i => $r)
-                                <tr class="table-row transition-all duration-150 hover:bg-neutral-50 hover:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.03)]"
+                                <tr class="table-row transition-all duration-150 hover:bg-blue-300 border-t border-black"
                                     data-master="{{ $r['id'] ?? '' }}"
                                     data-status="{{ strtolower($r['status'] ?? '') }}"
                                     data-company="{{ strtolower($r['company'] ?? '') }}"
@@ -222,19 +392,22 @@
                                     data-created-date="{{ $r['created_at'] ?? '' }}">
 
                                     <!-- Kolom awal (tidak sticky) -->
-                                    <td class="hairline px-4 py-3 align-top ink tabular-nums">{{ $i + 1 }}</td>
-                                    <td class="hairline px-4 py-3 align-top ink tabular-nums">
+                                    <td class="border border-black px-4 py-3 align-top ink tabular-nums">
+                                        {{ $i + 1 }}</td>
+                                    <td class="border border-black px-4 py-3 align-top ink tabular-nums">
                                         {{ $r['created_at'] ?? '' }}</td>
-                                    <td class="hairline px-4 py-3 align-top ink">{{ $r['month_name'] ?? '' }}</td>
+                                    <td class="border border-black px-4 py-3 align-top ink">
+                                        {{ $r['month_name'] ?? '' }}</td>
 
-                                    <td class="hairline px-4 py-3 align-top ink sticky left-0 z-20 bg-white shadow-[2px_0_0_rgba(0,0,0,0.06)] min-w-[220px]">
-    <div class="truncate pr-1" title="{{ $r['company'] ?? '' }}">
-        {{ $r['company'] ?? 'N/A' }}
-    </div>
-</td>
+                                    <td
+                                        class="border border-black px-4 py-3 align-top ink sticky left-0 z-10 bg-white min-w-[220px]">
+                                        <div class="truncate pr-1" title="{{ $r['company'] ?? '' }}">
+                                            {{ $r['company'] ?? 'N/A' }}
+                                        </div>
+                                    </td>
 
 
-                                    <td class="hairline px-4 py-3 align-top">
+                                    <td class="border border-black px-4 py-3 align-top">
                                         <span
                                             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
                                             {{ $r['product'] ?? 'N/A' }}
@@ -242,7 +415,7 @@
                                     </td>
 
                                     <!-- Publication Input -->
-                                    <td class="hairline px-4 py-3 align-top">
+                                    <td class="border border-black px-4 py-3 align-top">
                                         <input class="form-input auto-save-input w-32"
                                             value="{{ $r['publication'] ?? '' }}" data-master="{{ $r['id'] ?? '' }}"
                                             data-year="{{ $year ?? date('Y') }}" data-category="KLTG"
@@ -251,8 +424,8 @@
                                     </td>
 
                                     <!-- Edition Input -->
-                                    <td class="hairline px-4 py-3 align-top">
-                                        <input class="form-input auto-save-input w-32"
+                                    <td class="border border-black px-4 py-3 align-top">
+                                        <input class="form-input auto-save-input w-48"
                                             value="{{ $r['edition'] ?? '' }}" data-master="{{ $r['id'] ?? '' }}"
                                             data-year="{{ $year ?? date('Y') }}" data-category="KLTG"
                                             data-type="EDITION" data-field="edition" oninput="debouncedSave(this)"
@@ -260,7 +433,7 @@
                                     </td>
 
                                     <!-- Status Badge -->
-                                    <td class="hairline px-4 py-3 align-top">
+                                    <td class="border border-black px-4 py-3 align-top">
                                         <span class="badge-{{ strtolower($r['status'] ?? 'pending') }}">
                                             {{ $r['status'] ?? 'Pending' }}
                                         </span>
@@ -268,60 +441,76 @@
 
                                     @php
                                         // AFTER (handles Y-m-d, d/m/Y, m/d/Y, d/m, m/d, 2- or 4-digit years → displays d/m/y)
-$fmt = function ($v, $fallbackYear) {
-    if (!$v) return '';
+                                        $fmt = function ($v, $fallbackYear) {
+                                            if (!$v) {
+                                                return '';
+                                            }
 
-    try {
-        if ($v instanceof \Carbon\Carbon) {
-            return $v->format('d/m/y');
-        }
+                                            try {
+                                                if ($v instanceof \Carbon\Carbon) {
+                                                    return $v->format('d/m/y');
+                                                }
 
-        $s = trim((string) $v);
-        if ($s === '') return '';
+                                                $s = trim((string) $v);
+                                                if ($s === '') {
+                                                    return '';
+                                                }
 
-        // ISO (YYYY-MM-DD)
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $s)) {
-            return \Carbon\Carbon::createFromFormat('Y-m-d', $s)->format('d/m/y');
-        }
+                                                // ISO (YYYY-MM-DD)
+                                                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $s)) {
+                                                    return \Carbon\Carbon::createFromFormat('Y-m-d', $s)->format(
+                                                        'd/m/y',
+                                                    );
+                                                }
 
-        // Day/Month[/Year] or Month/Day[/Year]
-        // Try multiple masks; first one that parses wins
-        $tries = [
-            'd/m/Y', 'm/d/Y',
-            'd-m-Y', 'm-d-Y',
-            'd/m/y', 'm/d/y',
-            'd-m-y', 'm-d-y',
-        ];
-        foreach ($tries as $mask) {
-            try {
-                $dt = \Carbon\Carbon::createFromFormat($mask, $s);
-                if ($dt !== false) return $dt->format('d/m/y');
-            } catch (\Throwable $e) {}
-        }
+                                                // Day/Month[/Year] or Month/Day[/Year]
+                                                // Try multiple masks; first one that parses wins
+                                                $tries = [
+                                                    'd/m/Y',
+                                                    'm/d/Y',
+                                                    'd-m-Y',
+                                                    'm-d-Y',
+                                                    'd/m/y',
+                                                    'm/d/y',
+                                                    'd-m-y',
+                                                    'm-d-y',
+                                                ];
+                                                foreach ($tries as $mask) {
+                                                    try {
+                                                        $dt = \Carbon\Carbon::createFromFormat($mask, $s);
+                                                        if ($dt !== false) {
+                                                            return $dt->format('d/m/y');
+                                                        }
+                                                    } catch (\Throwable $e) {
+                                                    }
+                                                }
 
-        // Only D/M provided → append fallback year (4-digit) then parse
-        if (preg_match('/^(\d{1,2})\/(\d{1,2})$/', $s)) {
-            $full = $s . '/' . (int)$fallbackYear;
-            return \Carbon\Carbon::createFromFormat('d/m/Y', $full)->format('d/m/y');
-        }
-        if (preg_match('/^(\d{1,2})-(\d{1,2})$/', $s)) {
-            $full = $s . '-' . (int)$fallbackYear;
-            return \Carbon\Carbon::createFromFormat('d-m-Y', $full)->format('d/m/y');
-        }
-    } catch (\Throwable $e) {
-        // fall through
-    }
+                                                // Only D/M provided → append fallback year (4-digit) then parse
+                                                if (preg_match('/^(\d{1,2})\/(\d{1,2})$/', $s)) {
+                                                    $full = $s . '/' . (int) $fallbackYear;
+                                                    return \Carbon\Carbon::createFromFormat('d/m/Y', $full)->format(
+                                                        'd/m/y',
+                                                    );
+                                                }
+                                                if (preg_match('/^(\d{1,2})-(\d{1,2})$/', $s)) {
+                                                    $full = $s . '-' . (int) $fallbackYear;
+                                                    return \Carbon\Carbon::createFromFormat('d-m-Y', $full)->format(
+                                                        'd/m/y',
+                                                    );
+                                                }
+                                            } catch (\Throwable $e) {
+                                                // fall through
+                                            }
 
-    return $s;
-};
+                                            return $s;
+                                        };
 
-
-$rowYear = (int) ($r['year'] ?? ($year ?? date('Y')));
+                                        $rowYear = (int) ($r['year'] ?? ($year ?? date('Y')));
                                     @endphp
 
-                                    <td class="hairline px-4 py-3 align-top ink tabular-nums">
+                                    <td class="border border-black px-4 py-3 align-top ink tabular-nums">
                                         {{ $fmt($r['start'] ?? null, $rowYear) }}</td>
-                                    <td class="hairline px-4 py-3 align-top ink tabular-nums">
+                                    <td class="border border-black px-4 py-3 align-top ink tabular-nums">
                                         {{ $fmt($r['end'] ?? null, $rowYear) }}</td>
 
 
@@ -338,20 +527,20 @@ $rowYear = (int) ($r['year'] ?? ($year ?? date('Y')));
                                             ];
                                         @endphp
 
-                                        <td class="px-2 py-2 align-top hairline month-cell"
+                                        <td class="border border-black px-2 py-2 align-top month-cell"
                                             data-month="{{ $m }}">
                                             <div
-                                                class="min-w-[900px] border border-neutral-200 rounded-xl bg-white shadow-sm">
+                                                class="min-w-[900px] border border-black rounded-xl bg-white shadow-sm">
 
 
                                                 <div class="flex h-full">
                                                     @foreach ($cats as $index => $c)
                                                         <div
-                                                            class="flex-1 flex flex-col {{ $index < count($cats) - 1 ? 'border-r border-neutral-200' : '' }}">
+                                                            class="flex-1 flex flex-col {{ $index < count($cats) - 1 ? 'border-r border-black' : '' }}">
                                                             <!-- Category Header -->
                                                             <div
-                                                                class="text-center py-2 bg-neutral-50/30 border-b border-neutral-200 flex-shrink-0">
-                                                                <div class="header-label text-neutral-700">
+                                                                class="text-center py-2 bg-neutral-50/30 border-b border-black flex-shrink-0">
+                                                                <div class="header-label ink font-bold">
                                                                     {{ $c['label'] }}</div>
                                                             </div>
 
@@ -434,7 +623,7 @@ $rowYear = (int) ($r['year'] ?? ($year ?? date('Y')));
                         @else
                             <!-- Empty State -->
                             <tr>
-                                <td colspan="22" class="hairline px-6 py-16 text-center">
+                                <td colspan="22" class="border border-black px-6 py-16 text-center">
                                     <div class="flex flex-col items-center">
                                         <svg class="w-12 h-12 text-neutral-400 mb-4" fill="none"
                                             stroke="currentColor" viewBox="0 0 24 24">
@@ -615,7 +804,7 @@ $rowYear = (int) ($r['year'] ?? ($year ?? date('Y')));
                 value,
                 // include hex if this is the STATUS input (or it carries a color)
                 color: (el.dataset.color || (el.classList.contains('status-input') ? el.dataset.color : '') || '')
-                .trim() || null
+                    .trim() || null
             };
 
 
@@ -681,12 +870,13 @@ $rowYear = (int) ($r['year'] ?? ($year ?? date('Y')));
 
         // Filter functionality
         document.addEventListener('DOMContentLoaded', function() {
-    const monthFilter = document.getElementById('filter-month');
-    const yearFilter = document.getElementById('filter-year');
-    const companyFilter = document.getElementById('filter-company');
-    const clearFiltersBtn = document.getElementById('clear-filters');
-    const filterSummary = document.getElementById('filter-summary');
-    const activeFiltersChips = document.getElementById('active-filters-chips');
+            const monthFilter = document.getElementById('filter-month');
+            const yearFilter = document.getElementById('filter-year');
+            const companyFilter = document.getElementById('filter-company');
+            const clearFiltersBtn = document.getElementById('clear-filters');
+            const filterSummary = document.getElementById('filter-summary');
+            const activeFiltersChips = document.getElementById('active-filters-chips');
+
             function createChip(label, onRemove) {
                 const chip = document.createElement('div');
                 chip.className = 'chip';
@@ -698,74 +888,74 @@ $rowYear = (int) ($r['year'] ?? ($year ?? date('Y')));
             }
 
             function updateFilterSummary() {
-    if (!filterSummary || !activeFiltersChips) return;
+                if (!filterSummary || !activeFiltersChips) return;
 
-    activeFiltersChips.innerHTML = '';
-    const hasFilters = (monthFilter?.value || yearFilter?.value || companyFilter?.value);
+                activeFiltersChips.innerHTML = '';
+                const hasFilters = (monthFilter?.value || yearFilter?.value || companyFilter?.value);
 
-    if (hasFilters) {
-        filterSummary.classList.remove('hidden');
+                if (hasFilters) {
+                    filterSummary.classList.remove('hidden');
 
-        if (monthFilter?.value) {
-            const chip = createChip(`MONTH: ${monthFilter.value.toUpperCase()}`,
-                `document.getElementById('filter-month').value = ''; filterTable();`);
-            activeFiltersChips.appendChild(chip);
-        }
+                    if (monthFilter?.value) {
+                        const chip = createChip(`MONTH: ${monthFilter.value.toUpperCase()}`,
+                            `document.getElementById('filter-month').value = ''; filterTable();`);
+                        activeFiltersChips.appendChild(chip);
+                    }
 
-        if (yearFilter?.value) {
-            const chip = createChip(`YEAR: ${yearFilter.value}`,
-                `document.getElementById('filter-year').value = ''; filterTable();`);
-            activeFiltersChips.appendChild(chip);
-        }
+                    if (yearFilter?.value) {
+                        const chip = createChip(`YEAR: ${yearFilter.value}`,
+                            `document.getElementById('filter-year').value = ''; filterTable();`);
+                        activeFiltersChips.appendChild(chip);
+                    }
 
-        if (companyFilter?.value) {
-            const chip = createChip(`COMPANY: ${companyFilter.value.toUpperCase()}`,
-                `document.getElementById('filter-company').value = ''; filterTable();`);
-            activeFiltersChips.appendChild(chip);
-        }
-    } else {
-        filterSummary.classList.add('hidden');
-    }
-}
+                    if (companyFilter?.value) {
+                        const chip = createChip(`COMPANY: ${companyFilter.value.toUpperCase()}`,
+                            `document.getElementById('filter-company').value = ''; filterTable();`);
+                        activeFiltersChips.appendChild(chip);
+                    }
+                } else {
+                    filterSummary.classList.add('hidden');
+                }
+            }
 
-           function filterTable() {
-    const rows = document.querySelectorAll('tbody tr.table-row');
-    const mVal = (monthFilter?.value || '').trim();
-    const yVal = (yearFilter?.value || '').trim();
-    const cVal = (companyFilter?.value || '').trim().toLowerCase();
+            function filterTable() {
+                const rows = document.querySelectorAll('tbody tr.table-row');
+                const mVal = (monthFilter?.value || '').trim();
+                const yVal = (yearFilter?.value || '').trim();
+                const cVal = (companyFilter?.value || '').trim().toLowerCase();
 
-    let visibleCount = 0;
+                let visibleCount = 0;
 
-    rows.forEach(row => {
-        const rowYear = (row.dataset.year || '').trim();
-        const rowMonth = (row.dataset.month || '').trim();
-        const rowCompany = (row.dataset.company || '').trim().toLowerCase();
+                rows.forEach(row => {
+                    const rowYear = (row.dataset.year || '').trim();
+                    const rowMonth = (row.dataset.month || '').trim();
+                    const rowCompany = (row.dataset.company || '').trim().toLowerCase();
 
-        const yearOK = !yVal || rowYear === yVal;
-        const monthOK = !mVal || rowMonth === mVal;
-        const companyOK = !cVal || rowCompany === cVal;
+                    const yearOK = !yVal || rowYear === yVal;
+                    const monthOK = !mVal || rowMonth === mVal;
+                    const companyOK = !cVal || rowCompany === cVal;
 
-        const show = yearOK && monthOK && companyOK;
-        row.style.display = show ? '' : 'none';
-        if (show) visibleCount++;
-    });
+                    const show = yearOK && monthOK && companyOK;
+                    row.style.display = show ? '' : 'none';
+                    if (show) visibleCount++;
+                });
 
-    updateFilterSummary();
-}
+                updateFilterSummary();
+            }
 
             // Event listeners
             // Event listeners
-if (monthFilter) monthFilter.addEventListener('change', filterTable);
-if (yearFilter) yearFilter.addEventListener('change', filterTable);
-if (companyFilter) companyFilter.addEventListener('change', filterTable);
-if (clearFiltersBtn) {
-    clearFiltersBtn.addEventListener('click', () => {
-        if (monthFilter) monthFilter.value = '';
-        if (yearFilter) yearFilter.value = '';
-        if (companyFilter) companyFilter.value = '';
-        filterTable();
-    });
-}
+            if (monthFilter) monthFilter.addEventListener('change', filterTable);
+            if (yearFilter) yearFilter.addEventListener('change', filterTable);
+            if (companyFilter) companyFilter.addEventListener('change', filterTable);
+            if (clearFiltersBtn) {
+                clearFiltersBtn.addEventListener('click', () => {
+                    if (monthFilter) monthFilter.value = '';
+                    if (yearFilter) yearFilter.value = '';
+                    if (companyFilter) companyFilter.value = '';
+                    filterTable();
+                });
+            }
 
             // Initial filter run
             filterTable();

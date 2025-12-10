@@ -6,56 +6,54 @@
 @endpush
 
 @section('content')
-<div class="mx-auto max-w-7xl p-4">
-    @include('dashboard.master._tabs', ['active' => $active ?? 'kltg'])
+    <div class="mx-auto max-w-7xl p-4">
+        @include('dashboard.master._tabs', ['active' => $active ?? 'kltg'])
 
-    <h1 class="text-xl font-semibold mb-3">KLTG MASTER CLIENTELE</h1>
+        <h1 class="text-xl font-semibold mb-3">KLTG MASTER CLIENTELE</h1>
 
-    {{-- Filters --}}
-    @include('dashboard.master._filters', [
-        'action'   => route('dashboard.master.kltg'),
-        'clearUrl' => route('dashboard.master.kltg'),
-    ])
+        {{-- Filters --}}
+        @include('dashboard.master._filters', [
+            'action' => route('dashboard.master.kltg'),
+            'clearUrl' => route('dashboard.master.kltg'),
+        ])
 
-    {{-- Export button (keeps current filters) --}}
-    <div class="mb-4">
-        <a
-            href="{{ route('dashboard.master.export.kltg', array_merge(request()->only(['q','status','month','year']), ['scope' => 'kltg'])) }}"
-            class="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition"
-        >
-            Export KLTG
-        </a>
+        {{-- Export button (keeps current filters) --}}
+        <div class="mb-4">
+            <a href="{{ route('dashboard.master.export.kltg', array_merge(request()->only(['q', 'status', 'month', 'year']), ['scope' => 'kltg'])) }}"
+                class="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition">
+                Export KLTG
+            </a>
+        </div>
+
+        {{-- ✅ FIXED: Only the fields you specified as editable --}}
+        @include('dashboard.master._table', [
+            'rows' => $rows,
+            'columns' => $columns,
+        
+            // ✅ Only these fields are editable, others are read-only
+            'editable' => [
+                // Base fields
+                'barter' => 'text', // Barter
+                'product_category' => 'text', // Product Category
+        
+                // KLTG specific fields (matching your controller's $allowedKltg)
+                'kltg_industry' => 'text', // Industry
+                'kltg_x' => 'text', // KLTG X
+                'kltg_edition' => 'text', // Edition
+                'kltg_material_cbp' => 'text', // Material C/BP
+                'kltg_print' => 'text', // Print
+                'kltg_article' => 'text', // Article
+                'kltg_video' => 'text', // Video
+                'kltg_leaderboard' => 'text', // Leaderboard
+                'kltg_qr_code' => 'text', // QR Code
+                'kltg_blog' => 'text', // Blog
+                'kltg_em' => 'text', // EM
+                'kltg_remarks' => 'textarea', // Remarks (using textarea for longer text)
+            ],
+        
+            // Inline update endpoint + scope so controller can pick model
+            'updateUrl' => route('clientele.inline.update'),
+            'updatePayloadExtra' => ['scope' => 'kltg'],
+        ])
     </div>
-
-    {{-- ✅ FIXED: Only the fields you specified as editable --}}
-    @include('dashboard.master._table', [
-        'rows'    => $rows,
-        'columns' => $columns,
-
-        // ✅ Only these fields are editable, others are read-only
-        'editable' => [
-            // Base fields
-            'barter'           => 'text',           // Barter
-            'product_category' => 'text',           // Product Category
-
-            // KLTG specific fields (matching your controller's $allowedKltg)
-            'kltg_industry'    => 'text',           // Industry
-            'kltg_x'           => 'text',           // KLTG X
-            'kltg_edition'     => 'text',           // Edition
-            'kltg_material_cbp'=> 'text',           // Material C/BP
-            'kltg_print'       => 'text',           // Print
-            'kltg_article'     => 'text',           // Article
-            'kltg_video'       => 'text',           // Video
-            'kltg_leaderboard' => 'text',           // Leaderboard
-            'kltg_qr_code'     => 'text',           // QR Code
-            'kltg_blog'        => 'text',           // Blog
-            'kltg_em'          => 'text',           // EM
-            'kltg_remarks'     => 'textarea',       // Remarks (using textarea for longer text)
-        ],
-
-        // Inline update endpoint + scope so controller can pick model
-        'updateUrl'          => route('clientele.inline.update'),
-        'updatePayloadExtra' => ['scope' => 'kltg'],
-    ])
-</div>
 @endsection

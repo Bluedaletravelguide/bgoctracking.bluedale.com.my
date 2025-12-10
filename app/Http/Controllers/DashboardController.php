@@ -17,34 +17,34 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $year = $request->input('outdoor_year', now()->year);
-        $outdoorCategories = ['HM','TB','TTM','BB','Star','Flyers','Bunting','Signages','Outdoor', 'Newspaper'];
+        $outdoorCategories = ['HM', 'TB', 'TTM', 'BB', 'Star', 'Flyers', 'Bunting', 'Signages', 'Outdoor', 'Newspaper'];
         $hasPC = Schema::hasColumn('master_files', 'product_category');
 
         $outdoorQuery = MasterFile::query()
-            ->where(function($q) use ($outdoorCategories, $hasPC) {
+            ->where(function ($q) use ($outdoorCategories, $hasPC) {
                 if ($hasPC) {
                     $q->whereIn('product_category', $outdoorCategories)
-                    ->orWhereRaw('LOWER(product_category) LIKE ?', ['%outdoor%']);
+                        ->orWhereRaw('LOWER(product_category) LIKE ?', ['%outdoor%']);
                 } else {
                     // Fallback based on product names/codes
                     $q->whereIn('product', $outdoorCategories)
-                    ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%']);
+                        ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%']);
                 }
             })
-            ->where(function($q) use ($year) {
+            ->where(function ($q) use ($year) {
                 $q->whereYear('date', $year)
-                ->orWhereYear('date_finish', $year)
-                ->orWhereYear('created_at', $year);
+                    ->orWhereYear('date_finish', $year)
+                    ->orWhereYear('created_at', $year);
             });
 
         $outdoorClients = MasterFile::query()
-            ->where(function($q) use ($outdoorCategories, $hasPC){
+            ->where(function ($q) use ($outdoorCategories, $hasPC) {
                 if ($hasPC) {
                     $q->whereIn('product_category', $outdoorCategories)
-                    ->orWhereRaw('LOWER(product_category) LIKE ?', ['%outdoor%']);
+                        ->orWhereRaw('LOWER(product_category) LIKE ?', ['%outdoor%']);
                 } else {
                     $q->whereIn('product', $outdoorCategories)
-                    ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%']);
+                        ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%']);
                 }
             })
             ->whereNotNull('client')
@@ -52,29 +52,29 @@ class DashboardController extends Controller
 
         $outdoorStates = MasterFile::query()
             ->whereNotNull('location')
-            ->where(function($q) use ($outdoorCategories, $hasPC){
+            ->where(function ($q) use ($outdoorCategories, $hasPC) {
                 if ($hasPC) {
                     $q->whereIn('product_category', $outdoorCategories)
-                    ->orWhereRaw('LOWER(product_category) LIKE ?', ['%outdoor%']);
+                        ->orWhereRaw('LOWER(product_category) LIKE ?', ['%outdoor%']);
                 } else {
                     $q->whereIn('product', $outdoorCategories)
-                    ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%']);
+                        ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%']);
                 }
             })
             ->distinct()->pluck('location')->filter()->sort();
 
         $availableYears = MasterFile::query()
             ->selectRaw('YEAR(COALESCE(date, created_at)) as year')
-            ->where(function($q) use ($outdoorCategories, $hasPC){
+            ->where(function ($q) use ($outdoorCategories, $hasPC) {
                 if ($hasPC) {
                     $q->whereIn('product_category', $outdoorCategories)
-                    ->orWhereRaw('LOWER(product_category) LIKE ?', ['%outdoor%']);
+                        ->orWhereRaw('LOWER(product_category) LIKE ?', ['%outdoor%']);
                 } else {
                     $q->whereIn('product', $outdoorCategories)
-                    ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%']);
+                        ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%']);
                 }
             })
-            ->distinct()->orderBy('year','desc')->pluck('year')
+            ->distinct()->orderBy('year', 'desc')->pluck('year')
             ->when(fn($c) => !$c->contains(now()->year), fn($c) => $c->prepend(now()->year));
 
 
@@ -84,12 +84,12 @@ class DashboardController extends Controller
         // Apply filters if they exist
         if ($request->filled('search')) {
             $search = $request->search;
-            $masterFilesQuery->where(function($q) use ($search) {
+            $masterFilesQuery->where(function ($q) use ($search) {
                 $q->where('company', 'like', "%{$search}%")
-                  ->orWhere('product', 'like', "%{$search}%")
-                  ->orWhere('status', 'like', "%{$search}%")
-                  ->orWhere('client', 'like', "%{$search}%")
-                  ->orWhere('month', 'like', "%{$search}%");
+                    ->orWhere('product', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhere('client', 'like', "%{$search}%")
+                    ->orWhere('month', 'like', "%{$search}%");
             });
         }
 
@@ -131,8 +131,8 @@ class DashboardController extends Controller
         $kltgQuery = MasterFile::query()
             ->where(function ($q) {
                 $q->where('product_category', 'KLTG')
-                  ->orWhereRaw('LOWER(product_category) LIKE ?', ['%kltg%'])
-                  ->orWhere('product', 'like', '%KLTG%');
+                    ->orWhereRaw('LOWER(product_category) LIKE ?', ['%kltg%'])
+                    ->orWhere('product', 'like', '%KLTG%');
             });
 
         if ($request->filled('month')) {
@@ -148,17 +148,17 @@ class DashboardController extends Controller
         $mediaQuery = MasterFile::query()
             ->where(function ($q) {
                 $q->where('product_category', 'Media')
-                ->orWhereRaw('LOWER(product_category) LIKE ?', ['%media%'])
-                ->orWhere('product', 'like', '%FB%')
-                ->orWhere('product', 'like', '%IG%');
+                    ->orWhereRaw('LOWER(product_category) LIKE ?', ['%media%'])
+                    ->orWhere('product', 'like', '%FB%')
+                    ->orWhere('product', 'like', '%IG%');
             });
 
         // Year filter (optional if you want to match Outdoor logic)
         $year = $request->input('media_year', now()->year);
-        $mediaQuery->where(function($q) use ($year) {
+        $mediaQuery->where(function ($q) use ($year) {
             $q->whereYear('date', $year)
-            ->orWhereYear('date_finish', $year)
-            ->orWhereYear('created_at', $year);
+                ->orWhereYear('date_finish', $year)
+                ->orWhereYear('created_at', $year);
         });
 
         // Apply filters
@@ -167,7 +167,7 @@ class DashboardController extends Controller
         }
 
         if ($request->filled('media_state')) {
-            $mediaQuery->where('location', 'like', '%'.$request->media_state.'%');
+            $mediaQuery->where('location', 'like', '%' . $request->media_state . '%');
         }
 
         if ($request->filled('media_status')) {
@@ -218,10 +218,27 @@ class DashboardController extends Controller
                 $mediaUpserts->all(),
                 ['master_file_id'], // unique key
                 [
-                    'date', 'company', 'product', 'category', 'location',
-                    'start_date', 'end_date',
-                    'jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
-                    'remarks', 'updated_at'
+                    'date',
+                    'company',
+                    'product',
+                    'category',
+                    'location',
+                    'start_date',
+                    'end_date',
+                    'jan',
+                    'feb',
+                    'mar',
+                    'apr',
+                    'may',
+                    'jun',
+                    'jul',
+                    'aug',
+                    'sep',
+                    'oct',
+                    'nov',
+                    'dec',
+                    'remarks',
+                    'updated_at'
                 ]
             );
         }
@@ -246,16 +263,16 @@ class DashboardController extends Controller
 
         // Get recent jobs
         $recentJobs = MasterFile::whereNotNull('date')
-                               ->orderBy('date', 'desc')
-                               ->limit(10)
-                               ->get();
+            ->orderBy('date', 'desc')
+            ->limit(10)
+            ->get();
 
         $grouped = MasterFile::whereNotNull('date')
-                            ->orderBy('date', 'desc')
-                            ->get()
-                            ->groupBy(function($item) {
-                                return Carbon::parse($item->date)->format('Y');
-                            });
+            ->orderBy('date', 'desc')
+            ->get()
+            ->groupBy(function ($item) {
+                return Carbon::parse($item->date)->format('Y');
+            });
 
         return view('dashboard', compact(
             'masterFiles',
@@ -277,8 +294,8 @@ class DashboardController extends Controller
 
     // 🚀 NEW: Update Outdoor Tracking inline (AJAX)
     /**
- * AJAX update for outdoor monthly tracking fields
- */
+     * AJAX update for outdoor monthly tracking fields
+     */
     public function updateOutdoorField(Request $request)
     {
         try {
@@ -292,10 +309,22 @@ class DashboardController extends Controller
 
             // Allow these fields for inline editing
             $allowedFields = [
-                'site', 'location', 'status', 'remarks',
-                'check_jan', 'check_feb', 'check_mar', 'check_apr',
-                'check_may', 'check_jun', 'check_jul', 'check_aug',
-                'check_sep', 'check_oct', 'check_nov', 'check_dec'
+                'site',
+                'location',
+                'status',
+                'remarks',
+                'check_jan',
+                'check_feb',
+                'check_mar',
+                'check_apr',
+                'check_may',
+                'check_jun',
+                'check_jul',
+                'check_aug',
+                'check_sep',
+                'check_oct',
+                'check_nov',
+                'check_dec'
             ];
 
             if (!in_array($validated['field'], $allowedFields)) {
@@ -313,7 +342,6 @@ class DashboardController extends Controller
                 'success' => true,
                 'message' => 'Field updated successfully'
             ]);
-
         } catch (\Exception $e) {
             Log::error('Outdoor field update failed', [
                 'error' => $e->getMessage(),
@@ -382,160 +410,160 @@ class DashboardController extends Controller
     // app/Http/Controllers/DashboardController.php
 
     public function media()
-{
-    $year = now()->year;
+    {
+        $year = now()->year;
 
-    $rows = MasterFile::query()
-        ->where(function ($q) {
-            $q->whereRaw('LOWER(product_category) LIKE ?', ['%media%'])
-              ->orWhereRaw('LOWER(product) LIKE ?', ['%fb%'])
-              ->orWhereRaw('LOWER(product) LIKE ?', ['%ig%']);
-        })
-        ->orderByRaw('COALESCE(`date`, `created_at`) DESC')
-        ->get();
+        $rows = MasterFile::query()
+            ->where(function ($q) {
+                $q->whereRaw('LOWER(product_category) LIKE ?', ['%media%'])
+                    ->orWhereRaw('LOWER(product) LIKE ?', ['%fb%'])
+                    ->orWhereRaw('LOWER(product) LIKE ?', ['%ig%']);
+            })
+            ->orderByRaw('COALESCE(`date`, `created_at`) DESC')
+            ->get();
 
-    // kalau belum pakai detailsMap, kirim array kosong
-    return view('dashboard.media', [
-        'year'       => $year,
-        'rows'       => $rows,
-        'detailsMap' => [],
-    ]);
-}
+        // kalau belum pakai detailsMap, kirim array kosong
+        return view('dashboard.media', [
+            'year'       => $year,
+            'rows'       => $rows,
+            'detailsMap' => [],
+        ]);
+    }
 
 
     public function outdoor()
-{
-    // Base query for outdoor master files
-    $base = MasterFile::query()->where(function ($q) {
-        $q->where('product_category', 'Outdoor')
-          ->orWhereRaw('LOWER(product_category) LIKE ?', ['%outdoor%'])
-          ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%'])
-          // Add the same categories used in OutdoorCoordinatorTracking
-          ->orWhereIn('product_category', ['HM', 'TB', 'TTM', 'BB', 'Star', 'Flyers', 'Bunting', 'Signages', 'Newspaper']);
-    });
+    {
+        // Base query for outdoor master files
+        $base = MasterFile::query()->where(function ($q) {
+            $q->where('product_category', 'Outdoor')
+                ->orWhereRaw('LOWER(product_category) LIKE ?', ['%outdoor%'])
+                ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%'])
+                // Add the same categories used in OutdoorCoordinatorTracking
+                ->orWhereIn('product_category', ['HM', 'TB', 'TTM', 'BB', 'Star', 'Flyers', 'Bunting', 'Signages', 'Newspaper']);
+        });
 
-    // Apply filters from request
-    if (request('outdoor_year')) {
-        $base->whereRaw("YEAR(COALESCE(
+        // Apply filters from request
+        if (request('outdoor_year')) {
+            $base->whereRaw("YEAR(COALESCE(
             STR_TO_DATE(`date`, '%Y-%m-%d'),
             STR_TO_DATE(`date`, '%d/%m/%Y'),
             STR_TO_DATE(`date`, '%Y/%m/%d'),
             `created_at`
         )) = ?", [request('outdoor_year')]);
-    }
-
-    if (request('outdoor_client')) {
-        $base->where('client', request('outdoor_client'));
-    }
-
-    if (request('outdoor_state')) {
-        // Check if 'state' column exists, otherwise use 'location'
-        if (Schema::hasColumn('master_files', 'state')) {
-            $base->where('state', request('outdoor_state'));
-        } else {
-            $base->where('location', 'LIKE', '%' . request('outdoor_state') . '%');
         }
-    }
 
-    if (request('outdoor_status')) {
-        $base->where('status', request('outdoor_status'));
-    }
+        if (request('outdoor_client')) {
+            $base->where('client', request('outdoor_client'));
+        }
 
-    // Get available years for filter dropdown
-    $yearExpr = "YEAR(COALESCE(
+        if (request('outdoor_state')) {
+            // Check if 'state' column exists, otherwise use 'location'
+            if (Schema::hasColumn('master_files', 'state')) {
+                $base->where('state', request('outdoor_state'));
+            } else {
+                $base->where('location', 'LIKE', '%' . request('outdoor_state') . '%');
+            }
+        }
+
+        if (request('outdoor_status')) {
+            $base->where('status', request('outdoor_status'));
+        }
+
+        // Get available years for filter dropdown
+        $yearExpr = "YEAR(COALESCE(
         STR_TO_DATE(`date`, '%Y-%m-%d'),
         STR_TO_DATE(`date`, '%d/%m/%Y'),
         STR_TO_DATE(`date`, '%Y/%m/%d'),
         `created_at`
     )) as year";
 
-    $availableYears = MasterFile::query()
-        ->where(function ($q) {
-            $q->where('product_category', 'Outdoor')
-              ->orWhereRaw('LOWER(product_category) LIKE ?', ['%outdoor%'])
-              ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%'])
-              ->orWhereIn('product_category', ['HM', 'TB', 'TTM', 'BB', 'Star', 'Flyers', 'Bunting', 'Signages', 'Newspaper']);
-        })
-        ->selectRaw("DISTINCT {$yearExpr}")
-        ->orderByDesc('year')
-        ->pluck('year')
-        ->filter()
-        ->values();
+        $availableYears = MasterFile::query()
+            ->where(function ($q) {
+                $q->where('product_category', 'Outdoor')
+                    ->orWhereRaw('LOWER(product_category) LIKE ?', ['%outdoor%'])
+                    ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%'])
+                    ->orWhereIn('product_category', ['HM', 'TB', 'TTM', 'BB', 'Star', 'Flyers', 'Bunting', 'Signages', 'Newspaper']);
+            })
+            ->selectRaw("DISTINCT {$yearExpr}")
+            ->orderByDesc('year')
+            ->pluck('year')
+            ->filter()
+            ->values();
 
-    // Get the filtered records for the table
-    $outdoorJobs = (clone $base)
-        ->orderByRaw("COALESCE(
+        // Get the filtered records for the table
+        $outdoorJobs = (clone $base)
+            ->orderByRaw("COALESCE(
             STR_TO_DATE(`date`, '%Y-%m-%d'),
             STR_TO_DATE(`date`, '%d/%m/%Y'),
             STR_TO_DATE(`date`, '%Y/%m/%d'),
             `created_at`
         ) DESC")
-        ->get();
+            ->get();
 
-    // Get unfiltered data for filter dropdown options
-    $baseForFilters = MasterFile::query()->where(function ($q) {
-        $q->where('product_category', 'Outdoor')
-          ->orWhereRaw('LOWER(product_category) LIKE ?', ['%outdoor%'])
-          ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%'])
-          ->orWhereIn('product_category', ['HM', 'TB', 'TTM', 'BB', 'Star', 'Flyers', 'Bunting', 'Signages', 'Newspaper']);
-    });
+        // Get unfiltered data for filter dropdown options
+        $baseForFilters = MasterFile::query()->where(function ($q) {
+            $q->where('product_category', 'Outdoor')
+                ->orWhereRaw('LOWER(product_category) LIKE ?', ['%outdoor%'])
+                ->orWhereRaw('LOWER(product) LIKE ?', ['%outdoor%'])
+                ->orWhereIn('product_category', ['HM', 'TB', 'TTM', 'BB', 'Star', 'Flyers', 'Bunting', 'Signages', 'Newspaper']);
+        });
 
-    $outdoorClients = (clone $baseForFilters)
-        ->whereNotNull('client')
-        ->distinct()
-        ->pluck('client')
-        ->filter()
-        ->values();
-
-    $outdoorLocations = (clone $baseForFilters)
-        ->whereNotNull('location')
-        ->distinct()
-        ->pluck('location')
-        ->filter()
-        ->values();
-
-    // Get states - use 'state' column if it exists, otherwise derive from location
-    if (Schema::hasColumn('master_files', 'state')) {
-        $outdoorStates = (clone $baseForFilters)
-            ->whereNotNull('state')
+        $outdoorClients = (clone $baseForFilters)
+            ->whereNotNull('client')
             ->distinct()
-            ->pluck('state')
+            ->pluck('client')
             ->filter()
             ->values();
-    } else {
-        $outdoorStates = $outdoorLocations->map(function ($loc) {
-            $parts = array_map('trim', explode(',', (string) $loc));
-            return count($parts) ? end($parts) : null;
-        })->filter()->unique()->values();
+
+        $outdoorLocations = (clone $baseForFilters)
+            ->whereNotNull('location')
+            ->distinct()
+            ->pluck('location')
+            ->filter()
+            ->values();
+
+        // Get states - use 'state' column if it exists, otherwise derive from location
+        if (Schema::hasColumn('master_files', 'state')) {
+            $outdoorStates = (clone $baseForFilters)
+                ->whereNotNull('state')
+                ->distinct()
+                ->pluck('state')
+                ->filter()
+                ->values();
+        } else {
+            $outdoorStates = $outdoorLocations->map(function ($loc) {
+                $parts = array_map('trim', explode(',', (string) $loc));
+                return count($parts) ? end($parts) : null;
+            })->filter()->unique()->values();
+        }
+
+        $outdoorStatuses = (clone $baseForFilters)
+            ->whereNotNull('status')
+            ->distinct()
+            ->pluck('status')
+            ->filter()
+            ->values();
+
+        $outdoorProducts = (clone $baseForFilters)
+            ->whereNotNull('product')
+            ->distinct()
+            ->pluck('product')
+            ->filter()
+            ->values();
+
+        $monthlyByCategory = ['Outdoor' => $outdoorJobs];
+
+        return view('dashboard.outdoor', compact(
+            'availableYears',
+            'outdoorJobs',  // This is what the Blade template expects
+            'monthlyByCategory',
+            'outdoorClients',
+            'outdoorLocations',
+            'outdoorStates',
+            'outdoorStatuses',
+            'outdoorProducts'
+        ));
     }
-
-    $outdoorStatuses = (clone $baseForFilters)
-        ->whereNotNull('status')
-        ->distinct()
-        ->pluck('status')
-        ->filter()
-        ->values();
-
-    $outdoorProducts = (clone $baseForFilters)
-        ->whereNotNull('product')
-        ->distinct()
-        ->pluck('product')
-        ->filter()
-        ->values();
-
-    $monthlyByCategory = ['Outdoor' => $outdoorJobs];
-
-    return view('dashboard.outdoor', compact(
-        'availableYears',
-        'outdoorJobs',  // This is what the Blade template expects
-        'monthlyByCategory',
-        'outdoorClients',
-        'outdoorLocations',
-        'outdoorStates',
-        'outdoorStatuses',
-        'outdoorProducts'
-    ));
-}
 
     public function coordinatorMedia()
     {

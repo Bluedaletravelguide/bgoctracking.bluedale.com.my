@@ -45,7 +45,7 @@
                 font-variant: small-caps;
                 letter-spacing: 0.06em;
                 text-transform: uppercase;
-                font-size: 11px;
+                font-size: 12px;
                 font-weight: 500;
             }
 
@@ -114,12 +114,12 @@
                 color: #374151;
                 padding: 0.25rem 0.75rem;
                 border-radius: 9999px;
-                font-size: 0.75rem;
+                font-size: 12px;
                 font-weight: 500;
             }
 
             .table-row:hover {
-                background-color: #fafafa;
+                background-color: #e2e9ff;
                 box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
                 transform: translateY(-1px);
                 transition: all 150ms ease;
@@ -166,6 +166,7 @@
                     border: 1px solid var(--hairline);
                     padding: 1rem;
                     margin-bottom: 0.75rem;
+                    font-size: 20px;
                 }
             }
         </style>
@@ -237,6 +238,141 @@
                     </a>
                 @endcan
 
+                <!-- Preview Export Button -->
+                @can('export.run')
+                    <button type="button" onclick="showExportPreview()"
+                        class="btn-ghost inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                            </path>
+                        </svg>
+                        Preview Export
+                    </button>
+                @endcan
+
+                <!-- Preview Modal -->
+                <!-- Preview Modal -->
+                <div id="preview-modal" class="fixed inset-0 z-50 hidden">
+                    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+                    <div class="fixed inset-0 flex items-center justify-center p-4">
+                        <div
+                            class="bg-white rounded-lg max-w-6xl w-full max-h-[80vh] overflow-hidden shadow-xl flex flex-col">
+                            <!-- Header -->
+                            <div class="flex items-center justify-between p-4 border-b">
+                                <h3 class="text-lg font-semibold text-gray-900">Export Preview</h3>
+                                <button onclick="closePreviewModal()" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Content -->
+                            <div class="p-4 flex-grow overflow-y-auto">
+                                <div id="preview-content" class="text-sm">
+                                    <!-- Loading State -->
+                                    <div class="text-center py-8">
+                                        <div
+                                            class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4">
+                                        </div>
+                                        <p class="text-gray-600">Loading preview...</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="flex justify-end p-4 border-t bg-gray-50">
+                                <button onclick="closePreviewModal()"
+                                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 mr-2">
+                                    Close
+                                </button>
+                                <a id="export-link" href="{{ route('masterfile.exportXlsx', request()->query()) }}"
+                                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                                    Go to Export
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    function showExportPreview() {
+                        document.getElementById('preview-content').innerHTML = `
+        <div class="text-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-600">Loading preview...</p>
+        </div>
+    `;
+                        document.getElementById('preview-modal').classList.remove('hidden');
+
+                        fetch('{{ route('masterfile.exportPreview', request()->query()) }}')
+                            .then(response => response.json())
+                            .then(data => {
+                                renderPreviewTable(data);
+                            })
+                            .catch(error => {
+                                document.getElementById('preview-content').innerHTML = `
+                <div class="text-center py-8">
+                    <svg class="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <p class="text-red-600">Error loading preview</p>
+                </div>
+            `;
+                            });
+                    }
+
+                    function renderPreviewTable(data) {
+                        let html = `
+        <div class="mb-4 text-sm text-gray-600">
+            Showing first ${data.data.length} records of ${data.total_records} total records
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 border border-gray-300 rounded">
+                <thead class="bg-gray-50">
+                    <tr>
+                        `;
+
+                        data.headings.forEach(heading => {
+                            html +=
+                                `<th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border border-gray-300">${heading}</th>`;
+                        });
+
+                        html += `
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                        `;
+
+                        data.data.forEach((row, index) => {
+                            html += '<tr class="hover:bg-gray-50">';
+                            row.forEach(cell => {
+                                html +=
+                                    `<td class="px-3 py-2 text-sm text-gray-900 border border-gray-300">${cell || ''}</td>`;
+                            });
+                            html += '</tr>';
+                        });
+
+                        html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+
+                        document.getElementById('preview-content').innerHTML = html;
+                        document.getElementById('export-link').href = '{{ route('masterfile.exportXlsx', request()->query()) }}';
+                    }
+
+                    function closePreviewModal() {
+                        document.getElementById('preview-modal').classList.add('hidden');
+                    }
+                </script>
+
                 <!-- Information Booth -->
                 @can('information.booth.view')
                     <a href="{{ route('information.booth.index') }}"
@@ -277,92 +413,308 @@
 
     <!-- Filters Card -->
     <div class="card p-6 mb-8">
-        <form method="GET" action="{{ route('dashboard') }}" class="space-y-6">
-            <!-- Filter Fields Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Search -->
-                <div class="lg:col-span-2">
-                    <label class="small-caps text-gray-600 block mb-2">Search</label>
-                    <input type="text" name="search" id="search" value="{{ request('search') }}"
-                        placeholder="Company, product, status, client, month…"
-                        class="w-full h-11 rounded-xl border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm">
+        <form method="GET" action="{{ route('dashboard') }}" class="space-y-6" id="filterForm">
+            <!-- Filter Header -->
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                    Filter Results
+                </h3>
+                <button type="button" id="toggleFilters" class="sm:hidden text-gray-600 hover:text-gray-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Filter Fields in Single Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="filterFields">
+                <!-- Search with Clear Button -->
+                <div>
+                    <label for="search"
+                        class="small-caps text-gray-600 block mb-2 text-xs font-medium uppercase tracking-wide">
+                        SEARCH
+                    </label>
+                    <div class="relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input type="text" name="search" id="search" value="{{ request('search') }}"
+                            placeholder="Search by company, product, client..."
+                            class="w-full h-10 pl-10 pr-10 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all shadow-sm">
+                        @if (request('search'))
+                            <button type="button"
+                                onclick="document.getElementById('search').value=''; this.closest('form').submit();"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        @endif
+                    </div>
                 </div>
 
-                <!-- Status -->
+                <!-- Status with Icon -->
                 <div>
-                    <label class="small-caps text-gray-600 block mb-2">Status</label>
-                    <select name="status" id="status"
-                        class="w-full h-11 rounded-xl border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm">
-                        <option value="">All Status</option>
-                        <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed
-                        </option>
-                        <option value="ongoing" {{ request('status') == 'ongoing' ? 'selected' : '' }}>Ongoing</option>
-                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending
-                        </option>
-                    </select>
+                    <label for="status"
+                        class="small-caps text-gray-600 block mb-2 text-xs font-medium uppercase tracking-wide">
+                        STATUS
+                    </label>
+                    <div class="relative">
+                        <select name="status" id="status"
+                            class="w-full h-10 pl-3 pr-10 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none transition-all shadow-sm">
+                            <option value="">All Status</option>
+                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>✓
+                                Completed</option>
+                            <option value="ongoing" {{ request('status') == 'ongoing' ? 'selected' : '' }}>⟳ Ongoing
+                            </option>
+                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>○ Pending
+                            </option>
+                            <option value="deleted" {{ request('status') == 'deleted' ? 'selected' : '' }}>x Deleted
+                            </option>
+                        </select>
+                        <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
                 </div>
 
                 <!-- Month -->
                 <div>
-                    <label class="small-caps text-gray-600 block mb-2">Month</label>
-                    <select name="month" id="month"
-                        class="w-full h-11 rounded-xl border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm">
-                        <option value="">All Months</option>
-                        @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $m)
-                            <option value="{{ $m }}" {{ request('month') == $m ? 'selected' : '' }}>
-                                {{ $m }}</option>
-                        @endforeach
-                    </select>
+                    <label for="month"
+                        class="small-caps text-gray-600 block mb-2 text-xs font-medium uppercase tracking-wide">
+                        MONTH
+                    </label>
+                    <div class="relative">
+                        <select name="month" id="month"
+                            class="w-full h-10 pl-3 pr-10 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none transition-all shadow-sm">
+                            <option value="">All Months</option>
+                            @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $m)
+                                <option value="{{ $m }}" {{ request('month') == $m ? 'selected' : '' }}>
+                                    {{ substr($m, 0, 3) }}</option>
+                            @endforeach
+                        </select>
+                        <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
                 </div>
 
                 <!-- Category -->
                 <div>
-                    <label class="small-caps text-gray-600 block mb-2">Category</label>
-                    <select name="product_category" id="product_category"
-                        class="w-full h-11 rounded-xl border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm">
-                        <option value="">All Categories</option>
-                        <option value="Outdoor" {{ request('product_category') == 'Outdoor' ? 'selected' : '' }}>
-                            Outdoor</option>
-                        <option value="Media" {{ request('product_category') == 'Media' ? 'selected' : '' }}>Media
-                        </option>
-                        <option value="KLTG" {{ request('product_category') == 'KLTG' ? 'selected' : '' }}>KLTG
-                        </option>
-                    </select>
+                    <label for="product_category"
+                        class="small-caps text-gray-600 block mb-2 text-xs font-medium uppercase tracking-wide">
+                        CATEGORY
+                    </label>
+                    <div class="relative">
+                        <select name="product_category" id="product_category"
+                            class="w-full h-10 pl-3 pr-10 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none transition-all shadow-sm">
+                            <option value="">All Categories</option>
+                            <option value="Outdoor" {{ request('product_category') == 'Outdoor' ? 'selected' : '' }}>
+                                Outdoor</option>
+                            <option value="Media" {{ request('product_category') == 'Media' ? 'selected' : '' }}>
+                                Media</option>
+                            <option value="KLTG" {{ request('product_category') == 'KLTG' ? 'selected' : '' }}>KLTG
+                            </option>
+                        </select>
+                        <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
                 </div>
             </div>
 
             <!-- Filter Actions -->
-            <div class="flex flex-col sm:flex-row gap-3">
-                <button type="submit"
-                    class="btn-primary flex-1 sm:flex-none px-8 py-2.5 rounded-xl text-sm font-medium">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+                {{-- <button type="submit"
+                    class="btn-primary inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium shadow-sm hover:shadow-md transition-all duration-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
                     Apply Filters
-                </button>
+                </button> --}}
+
                 @if (request('search') || request('status') || request('month') || request('product_category'))
-                    <a href="{{ route('dashboard') }}" class="btn-ghost px-6 py-2.5 rounded-xl text-sm font-medium">
-                        Clear Filters
+                    <a href="{{ route('dashboard') }}"
+                        class="btn-ghost inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-100 border border-gray-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Clear All
                     </a>
+
+                    <!-- Results Count -->
+                    <div class="sm:ml-auto text-sm text-gray-600 flex items-center gap-2 px-3">
+                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                        <span class="font-medium">{{ $masterFiles->count() ?? 0 }} results</span>
+                    </div>
                 @endif
             </div>
 
             <!-- Active Filter Chips -->
             @if (request('search') || request('status') || request('month') || request('product_category'))
-                <div class="flex flex-wrap gap-2">
-                    @if (request('search'))
-                        <span class="filter-chip">SEARCH: "{{ request('search') }}"</span>
-                    @endif
-                    @if (request('status'))
-                        <span class="filter-chip">STATUS: {{ strtoupper(request('status')) }}</span>
-                    @endif
-                    @if (request('month'))
-                        <span class="filter-chip">MONTH: {{ strtoupper(request('month')) }}</span>
-                    @endif
-                    @if (request('product_category'))
-                        <span class="filter-chip">CATEGORY: {{ strtoupper(request('product_category')) }}</span>
-                    @endif
+                <div class="pt-4 border-t border-gray-100">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Active Filters:</span>
+
+                        @if (request('search'))
+                            <span
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-100 text-blue-800 text-xs font-medium border border-blue-200 shadow-sm">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                "{{ request('search') }}"
+                                <button type="button"
+                                    onclick="document.getElementById('search').value=''; document.getElementById('filterForm').submit();"
+                                    class="ml-1 hover:text-blue-900 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </span>
+                        @endif
+
+                        @if (request('status'))
+                            <span
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-100 text-purple-800 text-xs font-medium border border-purple-200 shadow-sm">
+                                Status: {{ ucfirst(request('status')) }}
+                                <button type="button"
+                                    onclick="document.getElementById('status').value=''; document.getElementById('filterForm').submit();"
+                                    class="ml-1 hover:text-purple-900 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </span>
+                        @endif
+
+                        @if (request('month'))
+                            <span
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-100 text-green-800 text-xs font-medium border border-green-200 shadow-sm">
+                                Month: {{ request('month') }}
+                                <button type="button"
+                                    onclick="document.getElementById('month').value=''; document.getElementById('filterForm').submit();"
+                                    class="ml-1 hover:text-green-900 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </span>
+                        @endif
+
+                        @if (request('product_category'))
+                            <span
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 text-amber-800 text-xs font-medium border border-amber-200 shadow-sm">
+                                Category: {{ request('product_category') }}
+                                <button type="button"
+                                    onclick="document.getElementById('product_category').value=''; document.getElementById('filterForm').submit();"
+                                    class="ml-1 hover:text-amber-900 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </span>
+                        @endif
+                    </div>
                 </div>
             @endif
         </form>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('filterForm');
+            const searchInput = document.getElementById('search');
+            const statusSelect = document.getElementById('status');
+            const monthSelect = document.getElementById('month');
+            const categorySelect = document.getElementById('product_category');
+
+            // Debounce function
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            // Auto-submit function
+            function autoSubmit() {
+                const url = new URL(form.action);
+                const params = new URLSearchParams();
+
+                // Get all form values
+                const search = searchInput.value.trim();
+                const status = statusSelect.value;
+                const month = monthSelect.value;
+                const category = categorySelect.value;
+
+                // Only add non-empty values
+                if (search) params.set('search', search);
+                if (status) params.set('status', status);
+                if (month) params.set('month', month);
+                if (category) params.set('product_category', category);
+
+                // Update URL without page parameter to reset pagination
+                const newUrl = url.pathname + '?' + params.toString();
+                window.location.href = newUrl;
+            }
+
+            // Create debounced version
+            const debouncedAutoSubmit = debounce(autoSubmit, 300);
+
+            // Add event listeners for auto-submit
+            if (searchInput) {
+                searchInput.addEventListener('input', debouncedAutoSubmit);
+            }
+
+            if (statusSelect) {
+                statusSelect.addEventListener('change', autoSubmit);
+            }
+
+            if (monthSelect) {
+                monthSelect.addEventListener('change', autoSubmit);
+            }
+
+            if (categorySelect) {
+                categorySelect.addEventListener('change', autoSubmit);
+            }
+
+            // Prevent form submission from triggering page reload for auto-submit
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                autoSubmit();
+            });
+        });
+    </script>
+
+
 
     <!-- Tab Navigation -->
     @include('dashboard.master._tabs', ['active' => $active ?? ''])
@@ -372,131 +724,185 @@
         <!-- Desktop Table -->
         <div class="hidden md:block overflow-x-auto">
             <div style="max-height: 600px; overflow-y: auto;">
-                <table class="min-w-full table-auto divide-y divide-gray-200">
-                    <thead class="bg-gray-50/50 sticky top-0 z-10">
+                <table class="min-w-full table-auto border-collapse">
+                    <thead class="bg-blue-600 text-white sticky top-0 z-10 border-b-2 border-gray-900   ">
                         <tr>
-
-                            <th class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[80px] whitespace-nowrap">
-       No
-   </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[120px] whitespace-nowrap">
-                                Date Created</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                No
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[220px] whitespace-nowrap">
-                                Sales Person</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Date Created
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[220px] whitespace-nowrap">
-                                Company Name</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[200px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Company Name
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[170px] whitespace-nowrap">
-                                Person In Charge</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Product
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[220px] whitespace-nowrap">
-                                Email</th>
+                                class="px-6 py-5 text-right text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Amount
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[170px] whitespace-nowrap">
-                                Contact Number</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Month
+                            </th>
                             <th
-                                class="px-6 py-4 text-right small-caps text-gray-600 font-medium min-w-[220px] whitespace-nowrap">
-                                Amount</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Start Date
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[120px] whitespace-nowrap">
-                                Product</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                End Date
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[120px] whitespace-nowrap">
-                                Month</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Duration
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[120px] whitespace-nowrap">
-                                Start Date</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[200px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Job
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[120px] whitespace-nowrap">
-                                End Date</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Status
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[120px] whitespace-nowrap">
-                                Duration</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Artwork
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[120px] whitespace-nowrap">
-                                Status</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Traffic
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[120px] whitespace-nowrap">
-                                Job</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Invoice Date
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[120px] whitespace-nowrap">
-                                Artwork</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Invoice Number
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[100px] whitespace-nowrap">
-                                Traffic</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Sales Person
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[120px] whitespace-nowrap">
-                                Invoice Date</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Person In Charge
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[160px] whitespace-nowrap">
-                                Invoice Number</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[220px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Email
+                            </th>
                             <th
-                                class="px-6 py-4 text-left small-caps text-gray-600 font-medium min-w-[120px] whitespace-nowrap">
-                                Remarks</th>
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Contact Number
+                            </th>
+                            <th
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 min-w-[200px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                Remarks
+                            </th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-100">
+                    <tbody class="bg-white divide-y divide-gray-00">
                         @if (isset($masterFiles) && $masterFiles->count() > 0)
                             @foreach ($masterFiles as $file)
-                                <tr class="table-row {{ $loop->iteration % 2 === 0 ? 'bg-white' : 'bg-gray-50' }}">
-
-                                    <td class="px-6 py-4 text-sm ink font-medium">
-       {{ $loop->iteration }}
-   </td>
-                                    <td class="px-6 py-4 text-sm ink">
-                                        {{ $file->created_at ? $file->created_at->format('d/m/y') : '-' }}</td>
-                                    <td class="px-6 py-4 text-sm ink">{{ $file->sales_person ?? '-' }}</td>
-                                    <td class="px-6 py-4 text-sm">
+                                <tr
+                                    class="table-row border-b border-gray-800 hover:bg-blue-50/30 transition-colors duration-150 {{ $loop->iteration % 2 === 0 ? 'bg-white' : 'bg-gray-50/50' }}">
+                                    <td class="px-6 py-4 text-sm ink font-semibold border-r border-gray-800">
+                                        {{ $loop->iteration }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                        {{ $file->created_at ? $file->created_at->format('d/m/y') : '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm border-r border-gray-800">
                                         @can('masterfile.show')
                                             <a href="{{ route('masterfile.show', $file->id) }}"
-                                                class="ink hover:text-blue-600 font-medium">
+                                                class="ink hover:text-blue-600 font-medium transition-colors duration-150 hover:underline">
                                                 <div class="max-w-[200px] truncate"
                                                     title="{{ $file->clientCompany->name ?? 'No Company' }}">
-                                                    {{ $file->clientCompany->name ?? 'No Company' }}</div>
+                                                    {{ $file->clientCompany->name ?? 'No Company' }}
+                                                </div>
                                             </a>
                                         @else
-                                            <div class="max-w-[200px] truncate"
+                                            <div class="max-w-[200px] truncate ink"
                                                 title="{{ $file->clientCompany->name ?? 'No Company' }}">
-                                                {{ $file->clientCompany->name ?? 'No Company' }}</div>
+                                                {{ $file->clientCompany->name ?? 'No Company' }}
+                                            </div>
                                         @endcan
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink">{{ $file->client->name ?? '-' }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-600">{{ $file->email ?? '-' }}</td>
-                                    <td class="px-6 py-4 text-sm ink">{{ $file->contact_number ?? '-' }}</td>
-                                    <td class="px-6 py-4 text-sm ink text-right tabular-nums font-medium">
-                                        {{ $file->amount ?? '-' }}</td>
-                                    <td class="px-6 py-4 text-sm ink">{{ $file->product ?? '-' }}</td>
-                                    <td class="px-6 py-4 text-sm ink">{{ $file->month ?? '-' }}</td>
-                                    <td class="px-6 py-4 text-sm ink">
+                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                        {{ $file->product ?? '-' }}
+                                    </td>
+                                    <td
+                                        class="px-6 py-4 text-sm ink text-right tabular-nums font-semibold border-r border-gray-800">
+                                        {{ $file->amount ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                        {{ $file->month ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
                                         {{ $file->date ? \Carbon\Carbon::parse($file->date)->format('d/m/y') : '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink">
+                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
                                         {{ $file->date_finish ? \Carbon\Carbon::parse($file->date_finish)->format('d/m/y') : '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink">{{ $file->duration ?? '-' }}</td>
-                                    <td class="px-6 py-4 text-sm">
+                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                        {{ $file->duration ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                        {{ $file->job_number ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm border-r border-gray-800">
                                         <span
-                                            class="inline-flex px-3 py-1 text-xs font-semibold rounded-full
-                                      {{ $file->status === 'completed' ? 'bg-green-100 text-green-800' : ($file->status === 'ongoing' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
+                                            class="inline-flex px-3 py-1.5 text-xs font-bold rounded-full {{ $file->status === 'completed' ? 'bg-green-100 text-green-800 border border-green-200' : ($file->status === 'ongoing' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' : ($file->status === 'deleted' ? 'bg-gray-100 text-gray-600 border border-gray-200' : 'bg-red-100 text-red-800 border border-red-200')) }}">
                                             {{ ucfirst($file->status ?? 'pending') }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink">{{ $file->job_number ?? '-' }}</td>
-                                    <td class="px-6 py-4 text-sm ink">{{ $file->artwork ?? '-' }}</td>
-                                    <td class="px-6 py-4 text-sm ink">{{ $file->traffic ?? '-' }}</td>
-                                    <td class="px-6 py-4 text-sm ink">
+                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                        {{ $file->artwork ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                        {{ $file->traffic ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
                                         {{ $file->invoice_date ? \Carbon\Carbon::parse($file->invoice_date)->format('d/m/y') : '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink">{{ $file->invoice_number ?? '-' }}</td>
-                                    <td class="px-6 py-4 text-sm ink">{{ $file->remarks ?? '-' }}</td>
+                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                        {{ $file->invoice_number ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                        {{ $file->sales_person ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                        {{ $file->client->name ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-800">
+                                        <a href="mailto:{{ $file->email }}"
+                                            class="hover:text-blue-600 transition-colors">
+                                            {{ $file->email ?? '-' }}
+                                        </a>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                        {{ $file->contact_number ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm ink cursor-pointer hover:text-blue-600 transition-colors"
+                                        onclick="showRemarksModal('{{ addslashes($file->remarks ?? '-') }}')"
+                                        title="Click to view full remarks">
+                                        <div class="max-w-[150px] truncate">
+                                            {{ $file->remarks ?? '-' }}
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforeach
                         @else
                             <tr>
-                                <td colspan="19" class="px-6 py-16 text-center text-gray-500">
+                                <td colspan="20" class="px-6 py-16 text-center text-gray-500">
                                     <div class="flex flex-col items-center">
                                         <svg class="w-16 h-16 text-gray-300 mb-6" fill="none"
                                             stroke="currentColor" viewBox="0 0 24 24">
@@ -508,7 +914,12 @@
                                         <p class="text-gray-600 mb-4">Get started by adding your first record.</p>
                                         @can('masterfile.create')
                                             <a href="{{ route('masterfile.create') }}"
-                                                class="btn-primary px-4 py-2 rounded-xl text-sm">
+                                                class="btn-primary px-4 py-2 rounded-xl text-sm inline-flex items-center gap-2">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M12 4v16m8-8H4" />
+                                                </svg>
                                                 Add New Record
                                             </a>
                                         @endcan
@@ -521,9 +932,73 @@
             </div>
         </div>
 
-        <!-- Mobile Table (if needed) -->
-        <div class="md:hidden">
-            <!-- Mobile cards would go here if implemented -->
+        <!-- Mobile Table -->
+        <div class="md:hidden p-4">
+            @if (isset($masterFiles) && $masterFiles->count() > 0)
+                @foreach ($masterFiles as $file)
+                    <div class="table-mobile-card mb-4 border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+                        <div class="flex justify-between items-start mb-3 pb-3 border-b border-gray-100">
+                            <div>
+                                <div class="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Company
+                                </div>
+                                @can('masterfile.show')
+                                    <a href="{{ route('masterfile.show', $file->id) }}"
+                                        class="text-sm font-semibold ink hover:text-blue-600">
+                                        {{ $file->clientCompany->name ?? 'No Company' }}
+                                    </a>
+                                @else
+                                    <div class="text-sm font-semibold ink">
+                                        {{ $file->clientCompany->name ?? 'No Company' }}
+                                    </div>
+                                @endcan
+                            </div>
+                            <span
+                                class="inline-flex px-2.5 py-1 text-xs font-bold rounded-full
+                            {{ $file->status === 'completed' ? 'bg-green-100 text-green-800' : ($file->status === 'ongoing' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
+                                {{ ucfirst($file->status ?? 'pending') }}
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <div class="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Sales
+                                    Person</div>
+                                <div class="ink">{{ $file->sales_person ?? '-' }}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Amount
+                                </div>
+                                <div class="ink font-semibold">{{ $file->amount ?? '-' }}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Product
+                                </div>
+                                <div class="ink">{{ $file->product ?? '-' }}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Month</div>
+                                <div class="ink">{{ $file->month ?? '-' }}</div>
+                            </div>
+                            <div class="col-span-2">
+                                <div class="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Contact
+                                </div>
+                                <div class="ink text-xs">{{ $file->email ?? '-' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            @else
+                <div class="text-center py-12">
+                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    <h3 class="text-base font-medium ink mb-2">No records found</h3>
+                    <p class="text-sm text-gray-600 mb-4">Get started by adding your first record.</p>
+                </div>
+            @endif
         </div>
     </div>
 
@@ -617,8 +1092,67 @@
         </div>
     @endcan
 
+    <!-- Modal for Remarks -->
+    <div id="remarks-modal" class="fixed inset-0 z-50 hidden">
+        <div class="fixed inset-0 bg-opacity-30 backdrop-blur-sm"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-hidden shadow-xl">
+                <div class="flex items-center justify-between p-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900">Remarks</h3>
+                    <button id="close-remarks-modal" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <div id="remarks-content" class="text-gray-700 whitespace-pre-wrap"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
+            function showRemarksModal(remarks) {
+                document.getElementById('remarks-content').textContent = remarks;
+                document.getElementById('remarks-modal').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeRemarksModal() {
+                document.getElementById('remarks-modal').classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+
+            // Close modal when clicking outside
+            document.getElementById('remarks-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeRemarksModal();
+                }
+            });
+
+            // Close modal with close button
+            document.getElementById('close-remarks-modal').addEventListener('click', closeRemarksModal);
+
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !document.getElementById('remarks-modal').classList.contains('hidden')) {
+                    closeRemarksModal();
+                }
+            });
+        </script>
+        <script>
+            // Mobile filter toggle
+            const toggleBtn = document.getElementById('toggleFilters');
+            const filterFields = document.getElementById('filterFields');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    filterFields.classList.toggle('hidden');
+                    toggleBtn.querySelector('svg').classList.toggle('rotate-180');
+                });
+            }
             // Import modal functions
             function testImportModal() {
                 console.log('🔵 testImportModal called');

@@ -219,21 +219,23 @@
         }
 
         .ledger-table {
-    width: 100% !important;
-    font-size: 0.875rem !important;
-    border-collapse: collapse !important;
-    border-spacing: 0 !important;
-}
-.ledger-table tbody td {
-    padding: 1.25rem 1rem !important;
-    margin: 0 !important;
-    border-bottom: 1px solid #D1D5DB !important;
-    border-right: 1px solid #D1D5DB !important;
-    transition: all 150ms ease !important;
-    vertical-align: middle !important;
-    background: white !important;
-    box-sizing: border-box !important;  /* ⬅️ TAMBAHKAN ini */
-}
+            width: 100% !important;
+            font-size: 0.875rem !important;
+            border-collapse: collapse !important;
+            border-spacing: 0 !important;
+        }
+
+        .ledger-table tbody td {
+            padding: 1.25rem 1rem !important;
+            margin: 0 !important;
+            border-bottom: 1px solid #D1D5DB !important;
+            border-right: 1px solid #D1D5DB !important;
+            transition: all 150ms ease !important;
+            vertical-align: middle !important;
+            background: white !important;
+            box-sizing: border-box !important;
+            /* ⬅️ TAMBAHKAN ini */
+        }
 
         .ledger-table thead th {
             padding: 1.25rem 1rem !important;
@@ -279,8 +281,8 @@
         }
 
         .ledger-table tbody tr:hover td[style*="position: sticky"] {
-    background-color: #EBF8FF !important;
-}
+            background-color: #EBF8FF !important;
+        }
 
         .ledger-table tbody tr:last-child td {
             border-bottom: 2px solid #D1D5DB !important;
@@ -288,73 +290,74 @@
 
         /* Table Inputs */
         /* Table Inputs */
-.table-input {
-    height: 2.25rem;
-    font-size: 0.875rem;
-    padding: 0 0.75rem;
-    border-radius: 0.5rem;
-    border: 1px solid #E5E7EB;
-    width: 100%;
-    transition: all 150ms ease;
-    min-width: 100px;
-    background: white;
-}
+        .table-input {
+            height: 2.25rem;
+            font-size: 0.875rem;
+            padding: 0 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #E5E7EB;
+            width: 100%;
+            transition: all 150ms ease;
+            min-width: 100px;
+            background: white;
+        }
 
-/* Stacked Input Container */
-.stacked-input-container {
-    display: flex;
-    flex-direction: column;
-    gap: 0.375rem;
-    min-width: 140px;
-}
+        /* Stacked Input Container */
+        .stacked-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+            min-width: 140px;
+        }
 
-.stacked-row {
-    display: flex;
-    gap: 0.25rem;
-    align-items: center;
-}
+        .stacked-row {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+        }
 
-.stacked-status-input {
-    flex: 1;
-    height: 1.75rem;
-    font-size: 0.75rem;
-    padding: 0 0.5rem;
-    border-radius: 0.375rem;
-    border: 1px solid #D1D5DB;
-    transition: all 150ms ease;
-    font-weight: 600;
-}
+        .stacked-status-input {
+            flex: 1;
+            height: 1.75rem;
+            font-size: 0.75rem;
+            padding: 0 0.5rem;
+            border-radius: 0.375rem;
+            border: 1px solid #D1D5DB;
+            transition: all 150ms ease;
+            font-weight: 600;
+        }
 
-/* Auto adjust text color based on background */
-.stacked-status-input[data-has-color="true"] {
-    color: white;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-}
+        /* Auto adjust text color based on background */
+        .stacked-status-input[data-has-color="true"] {
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
 
-.stacked-color-input {
-    width: 2.5rem;
-    height: 1.75rem;
-    border-radius: 0.375rem;
-    border: 1px solid #D1D5DB;
-    cursor: pointer;
-    padding: 0.125rem;
-}
+        .stacked-color-input {
+            width: 2.5rem;
+            height: 1.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid #D1D5DB;
+            cursor: pointer;
+            padding: 0.125rem;
+        }
 
-.stacked-date-input {
-    height: 2rem;
-    font-size: 0.875rem;
-    padding: 0 0.5rem;
-    border-radius: 0.375rem;
-    border: 1px solid #D1D5DB;
-    width: 100%;
-}
+        .stacked-date-input {
+            height: 2rem;
+            font-size: 0.875rem;
+            padding: 0 0.5rem;
+            border-radius: 0.375rem;
+            border: 1px solid #D1D5DB;
+            width: 100%;
+        }
 
-.stacked-status-input:focus,
-.stacked-date-input:focus {
-    outline: none;
-    border-color: #4bbbed;
-    box-shadow: 0 0 0 2px rgba(75, 187, 237, 0.1);
-}
+        .stacked-status-input:focus,
+        .stacked-date-input:focus {
+            outline: none;
+            border-color: #4bbbed;
+            box-shadow: 0 0 0 2px rgba(75, 187, 237, 0.1);
+        }
+
         .table-input:focus {
             outline: none;
             border-color: #4bbbed;
@@ -541,159 +544,174 @@
     /** @var \Illuminate\Support\Collection $rows */
     /** @var \Illuminate\Support\Collection $existing */
 
-  function _dbcol(string $k): string
-{
-    static $map = [
-        // ------- Umum / Common -------
-        'title'         => 'title_snapshot',
-        'company'       => 'company_snapshot',
-        'client_bp'     => 'client_bp',
-        'x'             => 'x',
-        'edition'       => 'edition',
-        'publication'   => 'publication',
-        'remarks'       => 'remarks',
-        'artwork_party' => 'artwork_bp_client',
+    function _dbcol(string $k): string
+    {
+        static $map = [
+            // ------- Umum / Common -------
+            'title' => 'title_snapshot',
+            'company' => 'company_snapshot',
+            'client_bp' => 'client_bp',
+            'x' => 'x',
+            'edition' => 'edition',
+            'publication' => 'publication',
+            'remarks' => 'remarks',
+            'artwork_party' => 'artwork_bp_client',
 
-        // ------- KLTG/Print dates (DB stores without "_date") -------
-        'artwork_reminder_date'   => 'artwork_reminder',
-        'material_received_date'  => 'material_record',
-        'artwork_done_date'       => 'artwork_done',
-        'send_chop_sign_date'     => 'send_chop_sign',
-        'chop_sign_approval_date' => 'chop_sign_approval',
-        'park_in_server_date'     => 'park_in_file_server',
+            // ------- KLTG/Print dates (DB stores without "_date") -------
+            'artwork_reminder_date' => 'artwork_reminder',
+            'material_received_date' => 'material_record',
+            'artwork_done_date' => 'artwork_done',
+            'send_chop_sign_date' => 'send_chop_sign',
+            'chop_sign_approval_date' => 'chop_sign_approval',
+            'park_in_server_date' => 'park_in_file_server',
 
-        // ------- Video / LB / Article (text+dates) -------
-        'material_reminder_text'  => 'material_reminder_text',
-        'video_done_date'         => 'video_done',
-        'pending_approval_date'   => 'pending_approval',
-        'video_approved_date'     => 'video_approved',
-        'video_scheduled_date'    => 'video_scheduled',
-        'video_posted_date'       => 'video_posted',
-        'article_done_date'       => 'article_done',
-        'article_approved_date'   => 'article_approved',
-        'article_scheduled_date'  => 'article_scheduled',
-        'article_posted_date'     => 'article_posted',
-        'post_link'               => 'post_link',
+            // ------- Video / LB / Article (text+dates) -------
+            'material_reminder_text' => 'material_reminder_text',
+            'video_done_date' => 'video_done',
+            'pending_approval_date' => 'pending_approval',
+            'video_approved_date' => 'video_approved',
+            'video_scheduled_date' => 'video_scheduled',
+            'video_posted_date' => 'video_posted',
+            'article_done_date' => 'article_done',
+            'article_approved_date' => 'article_approved',
+            'article_scheduled_date' => 'article_scheduled',
+            'article_posted_date' => 'article_posted',
+            'post_link' => 'post_link',
 
-        // ------- EM (already DB-native names) -------
-        'em_date_write'    => 'em_date_write',
-        'em_date_to_post'  => 'em_date_to_post',
-        'em_post_date'     => 'em_post_date',
-        'em_qty'           => 'em_qty',
-        'blog_link'        => 'blog_link',
-    ];
+            // ------- EM (already DB-native names) -------
+            'em_date_write' => 'em_date_write',
+            'em_date_to_post' => 'em_date_to_post',
+            'em_post_date' => 'em_post_date',
+            'em_qty' => 'em_qty',
+            'blog_link' => 'blog_link',
+        ];
 
-    // 1) Exact mapping first
-    if (isset($map[$k])) {
-        return $map[$k];
+        // 1) Exact mapping first
+        if (isset($map[$k])) {
+            return $map[$k];
+        }
+
+        // 2) Generic rule: if UI key ends with "_date", map to base column without suffix
+        //    (works for any future fields you add that follow this pattern)
+        if (substr($k, -5) === '_date') {
+            return substr($k, 0, -5);
+        }
+
+        // 3) Pass-through (covers *_status and *_color columns which already match DB)
+        return $k;
     }
-
-    // 2) Generic rule: if UI key ends with "_date", map to base column without suffix
-    //    (works for any future fields you add that follow this pattern)
-    if (substr($k, -5) === '_date') {
-        return substr($k, 0, -5);
-    }
-
-    // 3) Pass-through (covers *_status and *_color columns which already match DB)
-    return $k;
-}
 
     function stackedVals($existing, $row, $key, $type, $activeTab)
-{
-    // compose record key
-    $masterId = $row->master_file_id ?? $row->id;
-    $year = $row->activity_year;
-    $month = $row->activity_month;
+    {
+        // compose record key
+        $masterId = $row->master_file_id ?? $row->id;
+        $year = $row->activity_year;
+        $month = $row->activity_month;
 
-    $subcategoryMap = [
-        'print'   => 'KLTG',
-        'video'   => 'VIDEO',
-        'article' => 'ARTICLE',
-        'lb'      => 'LB',
-        'em'      => 'EM',
-    ];
-    $subcategory = $subcategoryMap[$activeTab] ?? strtoupper($activeTab);
-    $record = $existing->get($masterId . '_' . $subcategory . '_' . $year . '_' . $month);
-    if (!$record) return ['base'=>'','status'=>'','color'=>'','#baseCol'=>null,'#statusCol'=>null,'#colorCol'=>null];
-
-    // base DB column for the UI key
-    $baseCol = _dbcol($key);
-    $statusCol = $baseCol . '_status';
-    $colorCol  = $baseCol . '_color';
-
-    // read values
-    $base   = $record->{$baseCol} ?? '';
-    $status = $record->{$statusCol} ?? '';
-    $color  = $record->{$colorCol} ?? '';
-
-    // normalize date for <input type=date>
-    if ($type === 'date' && $base) {
-        try {
-            if (is_string($base) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $base)) {
-                // ok
-            } else {
-                $base = \Carbon\Carbon::parse($base)->format('Y-m-d');
-            }
-        } catch (\Throwable $e) {
-            $base = '';
+        $subcategoryMap = [
+            'print' => 'KLTG',
+            'video' => 'VIDEO',
+            'article' => 'ARTICLE',
+            'lb' => 'LB',
+            'em' => 'EM',
+        ];
+        $subcategory = $subcategoryMap[$activeTab] ?? strtoupper($activeTab);
+        $record = $existing->get($masterId . '_' . $subcategory . '_' . $year . '_' . $month);
+        if (!$record) {
+            return [
+                'base' => '',
+                'status' => '',
+                'color' => '',
+                '#baseCol' => null,
+                '#statusCol' => null,
+                '#colorCol' => null,
+            ];
         }
+
+        // base DB column for the UI key
+        $baseCol = _dbcol($key);
+        $statusCol = $baseCol . '_status';
+        $colorCol = $baseCol . '_color';
+
+        // read values
+        $base = $record->{$baseCol} ?? '';
+        $status = $record->{$statusCol} ?? '';
+        $color = $record->{$colorCol} ?? '';
+
+        // normalize date for <input type=date>
+        if ($type === 'date' && $base) {
+            try {
+                if (is_string($base) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $base)) {
+                    // ok
+                } else {
+                    $base = \Carbon\Carbon::parse($base)->format('Y-m-d');
+                }
+            } catch (\Throwable $e) {
+                $base = '';
+            }
+        }
+
+        return [
+            'base' => $base,
+            'status' => $status,
+            'color' => $color,
+            '#baseCol' => $baseCol,
+            '#statusCol' => $statusCol,
+            '#colorCol' => $colorCol,
+        ];
     }
-
-    return ['base'=>$base,'status'=>$status,'color'=>$color,'#baseCol'=>$baseCol,'#statusCol'=>$statusCol,'#colorCol'=>$colorCol];
-}
-
 
     function cellVal($existing, $row, $key, $type, $activeTab)
-{
-    // Build composite key: master_file_id_subcategory_year_month
-    $masterId = $row->master_file_id ?? $row->id;
-    $year = $row->activity_year;
-    $month = $row->activity_month;
+    {
+        // Build composite key: master_file_id_subcategory_year_month
+        $masterId = $row->master_file_id ?? $row->id;
+        $year = $row->activity_year;
+        $month = $row->activity_month;
 
-    // Map activeTab to stored subcategory - SEMUA UPPERCASE!
-    $subcategoryMap = [
-        'print'   => 'KLTG',
-        'video'   => 'VIDEO',     // ✅ UPPERCASE
-        'article' => 'ARTICLE',   // ✅ UPPERCASE
-        'lb'      => 'LB',
-        'em'      => 'EM',
-    ];
-    $subcategory = $subcategoryMap[$activeTab] ?? strtoupper($activeTab);
+        // Map activeTab to stored subcategory - SEMUA UPPERCASE!
+        $subcategoryMap = [
+            'print' => 'KLTG',
+            'video' => 'VIDEO', // ✅ UPPERCASE
+            'article' => 'ARTICLE', // ✅ UPPERCASE
+            'lb' => 'LB',
+            'em' => 'EM',
+        ];
+        $subcategory = $subcategoryMap[$activeTab] ?? strtoupper($activeTab);
 
-    $compositeKey = $masterId . '_' . $subcategory . '_' . $year . '_' . $month;
-    $record = $existing->get($compositeKey);
+        $compositeKey = $masterId . '_' . $subcategory . '_' . $year . '_' . $month;
+        $record = $existing->get($compositeKey);
 
-    if (!$record) {
-        return '';
-    }
+        if (!$record) {
+            return '';
+        }
 
-    $col = _dbcol($key);
-    $v = $record->{$col} ?? '';
+        $col = _dbcol($key);
+        $v = $record->{$col} ?? '';
 
-    // Normalize date values for HTML <input type="date">
-    if ($type === 'date') {
-        // If it's a Carbon/DateTime object, format it
+        // Normalize date values for HTML <input type="date">
+        if ($type === 'date') {
+            // If it's a Carbon/DateTime object, format it
         if (is_object($v) && method_exists($v, 'format')) {
             return $v->format('Y-m-d');
         }
         // If it's a string, trim time or parse
-        if (is_string($v) && $v !== '') {
-            // Common case: "YYYY-MM-DD HH:MM:SS" -> "YYYY-MM-DD"
-            if (preg_match('/^\d{4}-\d{2}-\d{2}/', $v, $m)) {
-                return $m[0];
+            if (is_string($v) && $v !== '') {
+                // Common case: "YYYY-MM-DD HH:MM:SS" -> "YYYY-MM-DD"
+                if (preg_match('/^\d{4}-\d{2}-\d{2}/', $v, $m)) {
+                    return $m[0];
+                }
+                try {
+                    return \Carbon\Carbon::parse($v)->format('Y-m-d');
+                } catch (\Throwable $e) {
+                    return '';
+                }
             }
-            try {
-                return \Carbon\Carbon::parse($v)->format('Y-m-d');
-            } catch (\Throwable $e) {
-                return '';
-            }
+            return '';
         }
-        return '';
-    }
 
-    // Non-date: return as-is (string/number/bool)
-    return $v ?? '';
-}
+        // Non-date: return as-is (string/number/bool)
+        return $v ?? '';
+    }
 @endphp
 
 <x-app-shell title="KLTG • Coordinator List">
@@ -804,17 +822,19 @@
                         </div>
 
                         <div>
-            <label style="display: block; color: #6B7280; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; font-weight: 600; font-family: 'Inter', sans-serif;">Company</label>
-            <select name="company"
-                style="height: 2.75rem; width: 100%; border: 2px solid #D1D5DB; border-radius: 0.75rem; padding: 0 1rem; font-size: 0.875rem; font-family: 'Inter', sans-serif; transition: all 150ms ease; background: white; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"%236B7280\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M19 9l-7 7-7-7\"/></svg>'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1rem;"
-                onfocus="this.style.borderColor='#4bbbed'; this.style.boxShadow='0 0 0 3px rgba(75, 187, 237, 0.1)';"
-                onblur="this.style.borderColor='#D1D5DB'; this.style.boxShadow='none';">
-                <option value="">All Companies</option>
-                @foreach($companies as $c)
-                    <option value="{{ $c }}" @selected($company == $c)>{{ $c }}</option>
-                @endforeach
-            </select>
-        </div>
+                            <label
+                                style="display: block; color: #6B7280; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; font-weight: 600; font-family: 'Inter', sans-serif;">Company</label>
+                            <select name="company"
+                                style="height: 2.75rem; width: 100%; border: 2px solid #D1D5DB; border-radius: 0.75rem; padding: 0 1rem; font-size: 0.875rem; font-family: 'Inter', sans-serif; transition: all 150ms ease; background: white; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"%236B7280\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M19 9l-7 7-7-7\"/></svg>'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1rem;"
+                                onfocus="this.style.borderColor='#4bbbed'; this.style.boxShadow='0 0 0 3px rgba(75, 187, 237, 0.1)';"
+                                onblur="this.style.borderColor='#D1D5DB'; this.style.boxShadow='none';">
+                                <option value="">All Companies</option>
+                                @foreach ($companies as $c)
+                                    <option value="{{ $c }}" @selected($company == $c)>
+                                        {{ $c }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
                         <div>
                             <button type="submit"
@@ -880,18 +900,18 @@
                             <thead>
                                 <tr>
                                     <th class="col-no text-right caps-header"
-    style="background: #F3F4F6; border-bottom: 3px solid #D1D5DB; border-right: 2px solid #D1D5DB; padding: 1.25rem 1rem; font-weight: 700;
+                                        style="background: #F3F4F6; border-bottom: 3px solid #D1D5DB; border-right: 2px solid #D1D5DB; padding: 1.25rem 1rem; font-weight: 700;
            position: sticky; left: 0; z-index: 12; box-shadow: 2px 0 0 rgba(209,213,219,1);">
-    No</th>
+                                        No</th>
                                     <th class="col-date caps-header"
-    style="background: #F3F4F6; border-bottom: 3px solid #D1D5DB; border-right: 2px solid #D1D5DB; padding: 1.25rem 1rem; font-weight: 700;
+                                        style="background: #F3F4F6; border-bottom: 3px solid #D1D5DB; border-right: 2px solid #D1D5DB; padding: 1.25rem 1rem; font-weight: 700;
            position: sticky; left: 60px; z-index: 12; box-shadow: 2px 0 0 rgba(209,213,219,1);">
-    Date Created</th>
+                                        Date Created</th>
                                     <th class="col-company caps-header"
-    style="background: #F3F4F6; border-bottom: 3px solid #D1D5DB; border-right: 2px solid #D1D5DB; padding: 1.25rem 1rem; font-weight: 700;
+                                        style="background: #F3F4F6; border-bottom: 3px solid #D1D5DB; border-right: 2px solid #D1D5DB; padding: 1.25rem 1rem; font-weight: 700;
            position: sticky; left: 180px; z-index: 12; box-shadow: 2px 0 0 rgba(209,213,219,1);">
-    Company
-</th>
+                                        Company
+                                    </th>
 
                                     <th class="col-person caps-header"
                                         style="background: #F3F4F6; border-bottom: 3px solid #D1D5DB; border-right: 2px solid #D1D5DB; padding: 1.25rem 1rem; font-weight: 700;">
@@ -925,23 +945,23 @@
                             </thead>
                             <tbody>
                                 @foreach ($rows as $i => $r)
-                                   <tr style="transition: all 150ms ease;">
-                                      <td class="col-no text-right soft-ink font-medium tabular-nums"
-    style="padding: 1.25rem 1rem; border-bottom: 1px solid #D1D5DB; border-right: 1px solid #D1D5DB; background: white;
+                                    <tr style="transition: all 150ms ease;">
+                                        <td class="col-no text-right soft-ink font-medium tabular-nums"
+                                            style="padding: 1.25rem 1rem; border-bottom: 1px solid #D1D5DB; border-right: 1px solid #D1D5DB; background: white;
            position: sticky; left: 0; z-index: 11; box-shadow: 2px 0 0 rgba(209,213,219,1);">
-    {{ $i + 1 }}</td>
+                                            {{ $i + 1 }}</td>
                                         <td class="col-date ink font-medium tabular-nums"
-    style="padding: 1.25rem 1rem; border-bottom: 1px solid #D1D5DB; border-right: 1px solid #D1D5DB; background: white;
+                                            style="padding: 1.25rem 1rem; border-bottom: 1px solid #D1D5DB; border-right: 1px solid #D1D5DB; background: white;
            position: sticky; left: 60px; z-index: 11; box-shadow: 2px 0 0 rgba(209,213,219,1);">
-    {{ optional($r->date ?? null)->format('Y-m-d') ?? optional($r->created_at)->format('Y-m-d') }}
-</td>
+                                            {{ optional($r->date ?? null)->format('Y-m-d') ?? optional($r->created_at)->format('Y-m-d') }}
+                                        </td>
                                         <td class="col-company ink font-medium"
-    style="padding: 1.25rem 1rem; border-bottom: 1px solid #D1D5DB; border-right: 1px solid #D1D5DB; background: white;
+                                            style="padding: 1.25rem 1rem; border-bottom: 1px solid #D1D5DB; border-right: 1px solid #D1D5DB; background: white;
            position: sticky; left: 180px; z-index: 11; box-shadow: 2px 0 0 rgba(209,213,219,1);">
-    <div class="truncate" title="{{ $r->company_name }}">
-        {{ $r->company_name }}
-    </div>
-</td>
+                                            <div class="truncate" title="{{ $r->company_name }}">
+                                                {{ $r->company_name }}
+                                            </div>
+                                        </td>
 
                                         <td class="col-person ink"
                                             style="padding: 1.25rem 1rem; border-bottom: 1px solid #D1D5DB; border-right: 1px solid #D1D5DB; background: white;">
@@ -977,46 +997,45 @@
                                                         <span class="placeholder-dash">—</span>
                                                     @endif
                                                 </td>
-                                           @else
-    <td class="col-standard {{ $isNumeric ? 'text-right' : '' }}" style="{{ $cellStyle }}">
-        @if ($type === 'date')
-            @php $vals = stackedVals($existing, $r, $key, $type, $activeTab); @endphp
-            <div class="stacked-input-container">
-                <!-- Status + Color Row -->
-                <div class="stacked-row">
-                    <input type="text"
-                        class="stacked-status-input"
-                        value="{{ $vals['status'] }}"
-                        placeholder="Status"
-                        data-master-file-id="{{ $r->id }}"
-                        data-subcategory="{{ $activeTab }}"
-                        data-field="{{ $key }}_status" />
-                    <input type="color"
-                        class="stacked-color-input"
-                        value="{{ $vals['color'] ?: '#ffffff' }}"
-                        data-master-file-id="{{ $r->id }}"
-                        data-subcategory="{{ $activeTab }}"
-                        data-field="{{ $key }}_color" />
-                </div>
-                <!-- Date Row -->
-                <input type="date"
-                    class="stacked-date-input tabular-nums"
-                    value="{{ $vals['base'] }}"
-                    data-master-file-id="{{ $r->id }}"
-                    data-subcategory="{{ $activeTab }}"
-                    data-field="{{ $key }}" />
-            </div>
-        @else
-            @php $val = cellVal($existing, $r, $key, $type, $activeTab); @endphp
-            <input type="text"
-                class="table-input {{ $isNumeric ? 'text-right tabular-nums' : '' }}"
-                value="{{ $val }}" placeholder="—"
-                data-master-file-id="{{ $r->id }}"
-                data-subcategory="{{ $activeTab }}"
-                data-field="{{ $key }}" />
-        @endif
-    </td>
-@endif
+                                            @else
+                                                <td class="col-standard {{ $isNumeric ? 'text-right' : '' }}"
+                                                    style="{{ $cellStyle }}">
+                                                    @if ($type === 'date')
+                                                        @php $vals = stackedVals($existing, $r, $key, $type, $activeTab); @endphp
+                                                        <div class="stacked-input-container">
+                                                            <!-- Status + Color Row -->
+                                                            <div class="stacked-row">
+                                                                <input type="text" class="stacked-status-input"
+                                                                    value="{{ $vals['status'] }}"
+                                                                    placeholder="Status"
+                                                                    data-master-file-id="{{ $r->id }}"
+                                                                    data-subcategory="{{ $activeTab }}"
+                                                                    data-field="{{ $key }}_status" />
+                                                                <input type="color" class="stacked-color-input"
+                                                                    value="{{ $vals['color'] ?: '#ffffff' }}"
+                                                                    data-master-file-id="{{ $r->id }}"
+                                                                    data-subcategory="{{ $activeTab }}"
+                                                                    data-field="{{ $key }}_color" />
+                                                            </div>
+                                                            <!-- Date Row -->
+                                                            <input type="date"
+                                                                class="stacked-date-input tabular-nums"
+                                                                value="{{ $vals['base'] }}"
+                                                                data-master-file-id="{{ $r->id }}"
+                                                                data-subcategory="{{ $activeTab }}"
+                                                                data-field="{{ $key }}" />
+                                                        </div>
+                                                    @else
+                                                        @php $val = cellVal($existing, $r, $key, $type, $activeTab); @endphp
+                                                        <input type="text"
+                                                            class="table-input {{ $isNumeric ? 'text-right tabular-nums' : '' }}"
+                                                            value="{{ $val }}" placeholder="—"
+                                                            data-master-file-id="{{ $r->id }}"
+                                                            data-subcategory="{{ $activeTab }}"
+                                                            data-field="{{ $key }}" />
+                                                    @endif
+                                                </td>
+                                            @endif
                                         @endforeach
                                     </tr>
                                 @endforeach
@@ -1105,71 +1124,71 @@
 
             // ✅ Column mapping for date fields
             const COLMAP = {
-    // Date field mappings (UI key -> DB column)
-    artwork_reminder_date: 'artwork_reminder',
-    material_received_date: 'material_record',
-    artwork_done_date: 'artwork_done',
-    send_chop_sign_date: 'send_chop_sign',
-    chop_sign_approval_date: 'chop_sign_approval',
-    park_in_server_date: 'park_in_file_server',
+                // Date field mappings (UI key -> DB column)
+                artwork_reminder_date: 'artwork_reminder',
+                material_received_date: 'material_record',
+                artwork_done_date: 'artwork_done',
+                send_chop_sign_date: 'send_chop_sign',
+                chop_sign_approval_date: 'chop_sign_approval',
+                park_in_server_date: 'park_in_file_server',
 
-    video_done_date: 'video_done',
-    pending_approval_date: 'pending_approval',
-    video_approved_date: 'video_approved',
-    video_scheduled_date: 'video_scheduled',
-    video_posted_date: 'video_posted',
+                video_done_date: 'video_done',
+                pending_approval_date: 'pending_approval',
+                video_approved_date: 'video_approved',
+                video_scheduled_date: 'video_scheduled',
+                video_posted_date: 'video_posted',
 
-    article_done_date: 'article_done',
-    article_approved_date: 'article_approved',
-    article_scheduled_date: 'article_scheduled',
-    article_posted_date: 'article_posted',
+                article_done_date: 'article_done',
+                article_approved_date: 'article_approved',
+                article_scheduled_date: 'article_scheduled',
+                article_posted_date: 'article_posted',
 
-    // ✅ ADD: Non-date fields that also need mapping
-    material_reminder_text: 'material_reminder_text',
-    post_link: 'post_link',
-    blog_link: 'blog_link',
+                // ✅ ADD: Non-date fields that also need mapping
+                material_reminder_text: 'material_reminder_text',
+                post_link: 'post_link',
+                blog_link: 'blog_link',
 
-    em_date_write: 'em_date_write',
-    em_date_to_post: 'em_date_to_post',
-    em_post_date: 'em_post_date',
-    em_qty: 'em_qty',
+                em_date_write: 'em_date_write',
+                em_date_to_post: 'em_date_to_post',
+                em_post_date: 'em_post_date',
+                em_qty: 'em_qty',
 
-    // ✅ ADD: Direct mappings (when Blade uses base name without _date suffix)
-    artwork_reminder: 'artwork_reminder',
-    material_record: 'material_record',
-    artwork_done: 'artwork_done',
-    send_chop_sign: 'send_chop_sign',
-    chop_sign_approval: 'chop_sign_approval',
-    park_in_file_server: 'park_in_file_server',
-    video_done: 'video_done',
-    pending_approval: 'pending_approval',
-    video_approved: 'video_approved',
-    video_scheduled: 'video_scheduled',
-    video_posted: 'video_posted',
-    article_done: 'article_done',
-    article_approved: 'article_approved',
-    article_scheduled: 'article_scheduled',
-    article_posted: 'article_posted',
-};
+                // ✅ ADD: Direct mappings (when Blade uses base name without _date suffix)
+                artwork_reminder: 'artwork_reminder',
+                material_record: 'material_record',
+                artwork_done: 'artwork_done',
+                send_chop_sign: 'send_chop_sign',
+                chop_sign_approval: 'chop_sign_approval',
+                park_in_file_server: 'park_in_file_server',
+                video_done: 'video_done',
+                pending_approval: 'pending_approval',
+                video_approved: 'video_approved',
+                video_scheduled: 'video_scheduled',
+                video_posted: 'video_posted',
+                article_done: 'article_done',
+                article_approved: 'article_approved',
+                article_scheduled: 'article_scheduled',
+                article_posted: 'article_posted',
+            };
 
-// ✅ Auto-handle *_status and *_color fields
-function normalizeField(field) {
-    // Handle status/color fields
-    if (field.endsWith('_status')) {
-        let base = field.replace(/_status$/, ''); // Remove _status
-        let dbBase = COLMAP[base] || base; // Map to DB column
-        return dbBase + '_status'; // Add _status back
-    }
+            // ✅ Auto-handle *_status and *_color fields
+            function normalizeField(field) {
+                // Handle status/color fields
+                if (field.endsWith('_status')) {
+                    let base = field.replace(/_status$/, ''); // Remove _status
+                    let dbBase = COLMAP[base] || base; // Map to DB column
+                    return dbBase + '_status'; // Add _status back
+                }
 
-    if (field.endsWith('_color')) {
-        let base = field.replace(/_color$/, ''); // Remove _color
-        let dbBase = COLMAP[base] || base; // Map to DB column
-        return dbBase + '_color'; // Add _color back
-    }
+                if (field.endsWith('_color')) {
+                    let base = field.replace(/_color$/, ''); // Remove _color
+                    let dbBase = COLMAP[base] || base; // Map to DB column
+                    return dbBase + '_color'; // Add _color back
+                }
 
-    // Handle regular fields
-    return COLMAP[field] || field;
-}
+                // Handle regular fields
+                return COLMAP[field] || field;
+            }
             // ✅ Build payload for autosave
             function buildPayload(el) {
                 const masterId = Number(el.dataset.masterFileId);
@@ -1197,48 +1216,48 @@ function normalizeField(field) {
 
             const inputs = document.querySelectorAll('[data-master-file-id][data-field]');
 
-inputs.forEach(el => {
-    el.addEventListener('change', () => save(el));
-    el.addEventListener('blur', () => save(el));
-});
+            inputs.forEach(el => {
+                el.addEventListener('change', () => save(el));
+                el.addEventListener('blur', () => save(el));
+            });
 
-// ✅ ADD: Sync color picker to status background
-function syncColorToStatus(colorInput) {
-    const container = colorInput.closest('.stacked-input-container');
-    if (!container) return;
+            // ✅ ADD: Sync color picker to status background
+            function syncColorToStatus(colorInput) {
+                const container = colorInput.closest('.stacked-input-container');
+                if (!container) return;
 
-    const statusInput = container.querySelector('.stacked-status-input');
-    if (!statusInput) return;
+                const statusInput = container.querySelector('.stacked-status-input');
+                if (!statusInput) return;
 
-    const color = colorInput.value || '#ffffff';
-    statusInput.style.backgroundColor = color;
-    statusInput.setAttribute('data-has-color', 'true');
+                const color = colorInput.value || '#ffffff';
+                statusInput.style.backgroundColor = color;
+                statusInput.setAttribute('data-has-color', 'true');
 
-    // Auto adjust text color (light bg = dark text, dark bg = light text)
-    const hex = color.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                // Auto adjust text color (light bg = dark text, dark bg = light text)
+                const hex = color.replace('#', '');
+                const r = parseInt(hex.substr(0, 2), 16);
+                const g = parseInt(hex.substr(2, 2), 16);
+                const b = parseInt(hex.substr(4, 2), 16);
+                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
 
-    statusInput.style.color = brightness > 155 ? '#1C1E26' : '#ffffff';
-}
+                statusInput.style.color = brightness > 155 ? '#1C1E26' : '#ffffff';
+            }
 
-// Apply on page load for existing colors
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.stacked-color-input').forEach(colorInput => {
-        syncColorToStatus(colorInput);
+            // Apply on page load for existing colors
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('.stacked-color-input').forEach(colorInput => {
+                    syncColorToStatus(colorInput);
 
-        // Sync on change
-        colorInput.addEventListener('input', function() {
-            syncColorToStatus(this);
-        });
+                    // Sync on change
+                    colorInput.addEventListener('input', function() {
+                        syncColorToStatus(this);
+                    });
 
-        colorInput.addEventListener('change', function() {
-            syncColorToStatus(this);
-        });
-    });
-});
+                    colorInput.addEventListener('change', function() {
+                        syncColorToStatus(this);
+                    });
+                });
+            });
 
             async function save(el) {
                 const payload = buildPayload(el);
