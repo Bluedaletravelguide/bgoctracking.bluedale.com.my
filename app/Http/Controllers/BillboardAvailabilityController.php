@@ -213,6 +213,7 @@ class BillboardAvailabilityController extends Controller
             }
 
             $results[] = [
+                'id'                 => $billboard->id,
                 'site_number'        => $billboard->site_number,
                 'location'           => $billboard->location?->name ?? '',
                 'area'               => $formattedArea,
@@ -500,7 +501,7 @@ class BillboardAvailabilityController extends Controller
                         'month'      => $current->format('m'),
                         'year'       => $current->year,
                         'span'       => $span,
-                        'text'       => $masterFile->clientCompany->name
+                        'text' => $masterFile->clientCompany?->name
                             ? $masterFile->clientCompany->name . ' (' . $bookingStart->format('d/m') . '–' . $bookingEnd->format('d/m/y') . ')'
                             : 'Booked (' . $bookingStart->format('d/m') . '–' . $bookingEnd->format('d/m/y') . ')',
                         'color'      => $colorClass,

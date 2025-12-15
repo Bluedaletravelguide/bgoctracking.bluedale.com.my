@@ -31,6 +31,18 @@
             border-color: #10b981 !important;
             background-color: #ecfdf5 !important;
         }
+
+        #imageModal {
+            display: none;
+        }
+
+        #imageModal.show {
+            display: flex;
+        }
+
+        #modalImage {
+            cursor: pointer;
+        }
     </style>
 
     <div class="container mx-auto px-4 py-8">
@@ -152,7 +164,8 @@
                         @if ($image1Exists)
                             <div class="absolute inset-0 flex items-center justify-center">
                                 <img src="{{ asset('storage/billboards/' . $billboard_detail->site_number . '_1.png') }}"
-                                    class="w-full h-full object-contain max-h-96" alt="Billboard Image 1">
+                                    class="w-full h-full object-contain max-h-96 cursor-pointer" alt="Billboard Image 1"
+                                    onclick="showImageModal('{{ asset('storage/billboards/' . $billboard_detail->site_number . '_1.png') }}')">
                             </div>
                             @if (Auth::guard('web')->check() &&
                                     Auth::guard('web')->user()->hasRole(['superadmin', 'admin']))
@@ -163,6 +176,13 @@
                                     <i class="fas fa-trash"></i>
                                 </button>
                             @endif
+                            <!-- Download Button - Add this line -->
+                            <button
+                                onclick="downloadImage('{{ asset('storage/billboards/' . $billboard_detail->site_number . '_1.png') }}')"
+                                class="absolute top-2 left-2 text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-200 ease-in-out"
+                                aria-label="Download Image 1">
+                                <i class="fas fa-download"></i>
+                            </button>
                         @else
                             <div
                                 class="flex flex-col items-center justify-center h-full p-4 text-center text-gray-500 bg-gray-50">
@@ -178,7 +198,8 @@
                         @if ($image2Exists)
                             <div class="absolute inset-0 flex items-center justify-center">
                                 <img src="{{ asset('storage/billboards/' . $billboard_detail->site_number . '_2.png') }}"
-                                    class="w-full h-full object-contain max-h-96" alt="Billboard Image 2">
+                                    class="w-full h-full object-contain max-h-96 cursor-pointer" alt="Billboard Image 2"
+                                    onclick="showImageModal('{{ asset('storage/billboards/' . $billboard_detail->site_number . '_2.png') }}')">
                             </div>
                             @if (Auth::guard('web')->check() &&
                                     Auth::guard('web')->user()->hasRole(['superadmin', 'admin']))
@@ -189,6 +210,13 @@
                                     <i class="fas fa-trash"></i>
                                 </button>
                             @endif
+                            <!-- Download Button - Add this line -->
+                            <button
+                                onclick="downloadImage('{{ asset('storage/billboards/' . $billboard_detail->site_number . '_2.png') }}')"
+                                class="absolute top-2 left-2 text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-200 ease-in-out"
+                                aria-label="Download Image 2">
+                                <i class="fas fa-download"></i>
+                            </button>
                         @else
                             <div
                                 class="flex flex-col items-center justify-center h-full p-4 text-center text-gray-500 bg-gray-50">
@@ -214,8 +242,8 @@
                             @csrf
                             <input type="hidden" name="site_number" value="{{ $billboard_detail->site_number }}">
                             <!-- <div class="fallback">
-                                                                                            <input name="files[]" id="fileInput" type="file" multiple accept="image/*" />
-                                                                                        </div> -->
+                                                                                                                                                    <input name="files[]" id="fileInput" type="file" multiple accept="image/*" />
+                                                                                                                                                </div> -->
                             <div class="dz-message" data-dz-message>
                                 <div class="text-lg font-medium text-gray-700">
                                     <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i><br>
@@ -230,7 +258,17 @@
         </div>
     </div>
 
-
+    <!-- Image Modal -->
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="relative max-w-4xl max-h-[90vh] p-4">
+            <img id="modalImage" src="" alt="Enlarged Billboard Image"
+                class="max-w-full max-h-full object-contain rounded-lg shadow-xl">
+            <button onclick="closeImageModal()"
+                class="absolute top-2 right-2 text-w bg-gray-800 hover:bg-gray-900 rounded-full p-2 transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+    </div>
 
     <!-- Edit Billboard Modal -->
     <div class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50 modal"
@@ -423,6 +461,32 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
 
     <script>
+        function showImageModal(imageSrc) {
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalImage');
+            img.src = imageSrc;
+            modal.classList.add('show');
+            // Optional: Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // Function to download the image
+        function downloadImage(imageUrl) {
+            const link = document.createElement('a');
+            link.href = imageUrl;
+            // Set filename based on URL (optional, can be improved)
+            link.download = imageUrl.split('/').pop();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         // Define functions in the global scope so they're accessible to inline onclick
         function deleteImage(filename, button) {
             if (!confirm('Are you sure you want to delete this image?')) return;

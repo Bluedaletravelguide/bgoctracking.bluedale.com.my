@@ -234,7 +234,12 @@ class OutdoorWhiteboardController extends Controller
             ->leftJoinSub($latestActiveWB, 'wb', function ($j) {
                 $j->on('wb.outdoor_item_id', '=', 'oi.id');
             })
-            ->whereNull('wb.completed_at') // ACTIVE ONLY
+            ->whereNotExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('outdoor_whiteboards as check_completed')
+                    ->whereColumn('check_completed.outdoor_item_id', 'oi.id')
+                    ->whereNotNull('check_completed.completed_at');
+            })
             ->orderBy('mf.product')
             ->orderBy('mf.company')
             ->orderBy('loc.name')

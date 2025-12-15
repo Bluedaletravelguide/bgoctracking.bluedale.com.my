@@ -45,7 +45,6 @@
                 height: 100%;
                 background-color: rgba(0, 0, 0, 0.5);
                 z-index: 9999;
-                overflow: auto;
             }
 
             .modal.show {
@@ -58,6 +57,8 @@
                 padding: 0;
                 border-radius: 8px;
                 max-width: 600px;
+                max-height: 90vh;
+                overflow-y: auto;
                 width: 90%;
             }
         </style>

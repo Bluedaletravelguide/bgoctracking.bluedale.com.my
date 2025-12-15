@@ -345,7 +345,10 @@
             </div>
         </div>
         <div class="flex flex-wrap items-center gap-4 mb-4 text-sm">
-            <p class="italic text-gray-500">*Click on the colored cells in the table to edit status</p>
+            <p class="italic text-black">*Click on the colored cells in the table to edit status</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-4 mb-4 text-sm">
+            <p class="italic text-black">*Click on the location in the table to view details</p>
         </div>
         <!-- Legend End -->
 
@@ -705,6 +708,7 @@
     <!-- <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script> -->
 
     <script>
+        const BILLBOARD_DETAIL_ROUTE = "{{ route('billboard.detail', ['id' => '__ID__']) }}";
         $(document).ready(function() {
 
             // Initialize Select2 for all dropdowns
@@ -2251,8 +2255,8 @@
                             <span class="location-short">${shortText}</span>
                             ${data.length > 30 
                                 ? `<a href="javascript:void(0)" class="read-more text-blue-500 ml-2" 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            data-full="${encodeURIComponent(data)}"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            data-short="${encodeURIComponent(shortText)}">[+]</a>` 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data-full="${encodeURIComponent(data)}"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data-short="${encodeURIComponent(shortText)}">[+]</a>` 
                                 : "" }
                         `;
                             }
@@ -2270,8 +2274,8 @@
                             <span class="location-short">${shortText}</span>
                             ${data.length > 30 
                                 ? `<a href="javascript:void(0)" class="read-more text-blue-500 ml-2" 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            data-full="${encodeURIComponent(data)}"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            data-short="${encodeURIComponent(shortText)}">[+]</a>` 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data-full="${encodeURIComponent(data)}"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data-short="${encodeURIComponent(shortText)}">[+]</a>` 
                                 : "" }
                         `;
                             }
@@ -2567,6 +2571,18 @@
             let endPicker = null;
 
             document.getElementById("inputBookingSubmit").addEventListener("click", inputBookingSubmit);
+
+            $(document).on('click', '.location-text', function(e) {
+                e.stopPropagation(); // prevent row click / expand conflict
+
+                const $row = $(this).closest('tr');
+                const billboardId = $row.data('id');
+
+                if (!billboardId) return;
+
+                const url = BILLBOARD_DETAIL_ROUTE.replace('__ID__', billboardId);
+                window.open(url, '_blank');
+            });
 
             $(document).on('click', '.toggle-location', function(e) {
                 e.preventDefault();
