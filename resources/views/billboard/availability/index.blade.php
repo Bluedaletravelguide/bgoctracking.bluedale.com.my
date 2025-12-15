@@ -977,15 +977,17 @@
 
                 // If no type selected, fallback to "Outdoor"
                 if (!billboardTypeVal) {
-                    billboardType = 'Outdoor';
+                    billboardTypeVal = 'Outdoor';
                 }
 
                 const dt = new Date();
+                const bookedOnly = $('#filterBookedOnly').is(':checked');
+                const typeSuffix = bookedOnly ? 'BOOKED' : 'FULL';
                 const formattedDate =
-                    `${dt.getFullYear()}${String(dt.getMonth() + 1).padStart(2, '0')}${String(dt.getDate()).padStart(2, '0')}`;
+                    `${String(dt.getDate()).padStart(2, '0')}${String(dt.getMonth() + 1).padStart(2, '0')}${dt.getFullYear()}`;
                 const formattedTime = `${dt.getHours()}:${dt.getMinutes()}:${dt.getSeconds()}`;
                 const fileName =
-                    `${billboardType}_Availability_Report_${year}_${formattedDate}_${formattedTime}.xlsx`;
+                    `${year} ${billboardTypeVal}-${typeSuffix} Availability ${formattedDate}.xlsx`;
 
                 const workbook = new ExcelJS.Workbook();
 
@@ -2255,8 +2257,8 @@
                             <span class="location-short">${shortText}</span>
                             ${data.length > 30 
                                 ? `<a href="javascript:void(0)" class="read-more text-blue-500 ml-2" 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data-full="${encodeURIComponent(data)}"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data-short="${encodeURIComponent(shortText)}">[+]</a>` 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data-full="${encodeURIComponent(data)}"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data-short="${encodeURIComponent(shortText)}">[+]</a>` 
                                 : "" }
                         `;
                             }
@@ -2274,8 +2276,8 @@
                             <span class="location-short">${shortText}</span>
                             ${data.length > 30 
                                 ? `<a href="javascript:void(0)" class="read-more text-blue-500 ml-2" 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data-full="${encodeURIComponent(data)}"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data-short="${encodeURIComponent(shortText)}">[+]</a>` 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data-full="${encodeURIComponent(data)}"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                data-short="${encodeURIComponent(shortText)}">[+]</a>` 
                                 : "" }
                         `;
                             }

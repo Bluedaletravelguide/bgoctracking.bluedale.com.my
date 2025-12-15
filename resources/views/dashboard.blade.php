@@ -169,6 +169,78 @@
                     font-size: 20px;
                 }
             }
+
+            .table-cell-border {
+                position: relative;
+            }
+
+            .table-cell-border:not(:last-child)::after {
+                content: '';
+                position: absolute;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                width: 1px;
+                background-color: var(--ink);
+            }
+
+            /* Ensure sticky columns maintain their background over scrolled content */
+            .sticky.left-0 {
+                background-clip: padding-box;
+                position: sticky !important;
+                z-index: 40;
+                /* Higher than other content but below header */
+            }
+
+            /* Ensure modal appears on top of everything */
+            #preview-modal {
+                z-index: 9999 !important;
+            }
+
+            #preview-modal .bg-white {
+                z-index: 9999 !important;
+                position: relative;
+            }
+
+            /* Ensure table scrolls horizontally on small screens */
+            .overflow-x-auto {
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: thin;
+                scrollbar-color: #e5e7eb #f9fafb;
+            }
+
+            .overflow-x-auto::-webkit-scrollbar {
+                height: 6px;
+            }
+
+            .overflow-x-auto::-webkit-scrollbar-thumb {
+                background-color: #e5e7eb;
+                border-radius: 4px;
+            }
+
+            .overflow-x-auto::-webkit-scrollbar-track {
+                background-color: #f9fafb;
+            }
+
+            /* Compact padding for dense tables */
+            .table-auto th,
+            .table-auto td {
+                padding: 0.375rem 0.5rem;
+                /* px-2 py-1.5 */
+                font-size: 0.75rem;
+                /* text-xs */
+            }
+
+            /* Sticky header stays visible */
+            .thead-sticky {
+                position: sticky;
+                top: 0;
+                z-index: 50;
+                background: #2563eb;
+                /* bg-blue-600 */
+                color: white;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
         </style>
     @endpush
 
@@ -254,12 +326,12 @@
                 @endcan
 
                 <!-- Preview Modal -->
-                <!-- Preview Modal -->
                 <div id="preview-modal" class="fixed inset-0 z-50 hidden">
                     <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
                     <div class="fixed inset-0 flex items-center justify-center p-4">
+                        <!-- Changed from max-w-6xl to max-w-4xl (reduced size) -->
                         <div
-                            class="bg-white rounded-lg max-w-6xl w-full max-h-[80vh] overflow-hidden shadow-xl flex flex-col">
+                            class="bg-white rounded-lg w-full max-w-4xl max-h-[70vh] overflow-hidden shadow-xl flex flex-col z-50">
                             <!-- Header -->
                             <div class="flex items-center justify-between p-4 border-b">
                                 <h3 class="text-lg font-semibold text-gray-900">Export Preview</h3>
@@ -302,11 +374,11 @@
                 <script>
                     function showExportPreview() {
                         document.getElementById('preview-content').innerHTML = `
-        <div class="text-center py-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p class="text-gray-600">Loading preview...</p>
-        </div>
-    `;
+                            <div class="text-center py-8">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                <p class="text-gray-600">Loading preview...</p>
+                            </div>
+                        `;
                         document.getElementById('preview-modal').classList.remove('hidden');
 
                         fetch('{{ route('masterfile.exportPreview', request()->query()) }}')
@@ -316,14 +388,14 @@
                             })
                             .catch(error => {
                                 document.getElementById('preview-content').innerHTML = `
-                <div class="text-center py-8">
-                    <svg class="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                    </svg>
-                    <p class="text-red-600">Error loading preview</p>
-                </div>
-            `;
+                                <div class="text-center py-8">
+                                    <svg class="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                    </svg>
+                                    <p class="text-red-600">Error loading preview</p>
+                                </div>
+                            `;
                             });
                     }
 
@@ -332,37 +404,42 @@
         <div class="mb-4 text-sm text-gray-600">
             Showing first ${data.data.length} records of ${data.total_records} total records
         </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 border border-gray-300 rounded">
-                <thead class="bg-gray-50">
-                    <tr>
-                        `;
+        <div class="border border-gray-300 rounded overflow-hidden">
+            <div class="max-h-72 overflow-y-auto">
+                <!-- 👇 This container enables horizontal scroll -->
+                <div class="overflow-x-auto px-1">
+                    <table class="min-w-full divide-y divide-gray-200 table-auto text-xs">
+                        <thead class="bg-blue-600 text-white thead-sticky">
+                            <tr>
+    `;
 
                         data.headings.forEach(heading => {
                             html +=
-                                `<th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border border-gray-300">${heading}</th>`;
+                                `<th class="px-2 py-1.5 text-left font-bold uppercase tracking-wider text-white border-b border-r border-blue-700 last:border-r-0 whitespace-nowrap">${heading}</th>`;
                         });
 
                         html += `
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                        `;
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+    `;
 
                         data.data.forEach((row, index) => {
                             html += '<tr class="hover:bg-gray-50">';
                             row.forEach(cell => {
                                 html +=
-                                    `<td class="px-3 py-2 text-sm text-gray-900 border border-gray-300">${cell || ''}</td>`;
+                                    `<td class="px-2 py-1.5 text-sm text-gray-900 border-b border-r border-gray-300 last:border-r-0 whitespace-nowrap">${cell || ''}</td>`;
                             });
                             html += '</tr>';
                         });
 
                         html += `
-                                    </tbody>
-                                </table>
-                            </div>
-                        `;
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
 
                         document.getElementById('preview-content').innerHTML = html;
                         document.getElementById('export-link').href = '{{ route('masterfile.exportXlsx', request()->query()) }}';
@@ -499,7 +576,7 @@
                             <option value="">All Months</option>
                             @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $m)
                                 <option value="{{ $m }}" {{ request('month') == $m ? 'selected' : '' }}>
-                                    {{ substr($m, 0, 3) }}</option>
+                                    {{ $m }}</option>
                             @endforeach
                         </select>
                         <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
@@ -725,82 +802,82 @@
         <div class="hidden md:block overflow-x-auto">
             <div style="max-height: 600px; overflow-y: auto;">
                 <table class="min-w-full table-auto border-collapse">
-                    <thead class="bg-blue-600 text-white sticky top-0 z-10 border-b-2 border-gray-900   ">
+                    <thead class="bg-blue-600 text-white thead-sticky border-b-2 border-gray-900">
                         <tr>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 No
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 Date Created
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[200px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 min-w-[200px] bg-white/80 backdrop-blur-sm sticky left-0 z-50 table-cell-border">
                                 Company Name
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 Product
                             </th>
                             <th
-                                class="px-6 py-5 text-right text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-right text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 Amount
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 Month
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 Start Date
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 End Date
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 Duration
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[200px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
-                                Job
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[100px] bg-white/80 backdrop-blur-sm">
+                                JO #
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 Status
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 Artwork
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 Traffic
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 Invoice Date
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 Invoice Number
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 Sales Person
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 Person In Charge
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[220px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[220px] bg-white/80 backdrop-blur-sm">
                                 Email
                             </th>
                             <th
-                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 border-r border-gray-900 min-w-[50px] whitespace-nowrap bg-white/80 backdrop-blur-sm">
+                                class="px-6 py-5 text-left text-xs font-bold uppercase tracking-wider text-gray-800 table-cell-border min-w-[50px] bg-white/80 backdrop-blur-sm">
                                 Contact Number
                             </th>
                             <th
@@ -814,13 +891,13 @@
                             @foreach ($masterFiles as $file)
                                 <tr
                                     class="table-row border-b border-gray-800 hover:bg-blue-50/30 transition-colors duration-150 {{ $loop->iteration % 2 === 0 ? 'bg-white' : 'bg-gray-50/50' }}">
-                                    <td class="px-6 py-4 text-sm ink font-semibold border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm ink font-semibold table-cell-border">
                                         {{ $loop->iteration }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm table-cell-border">
                                         {{ $file->created_at ? $file->created_at->format('d/m/y') : '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm table-cell-border sticky left-0 bg-white">
                                         @can('masterfile.show')
                                             <a href="{{ route('masterfile.show', $file->id) }}"
                                                 class="ink hover:text-blue-600 font-medium transition-colors duration-150 hover:underline">
@@ -836,59 +913,59 @@
                                             </div>
                                         @endcan
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm ink table-cell-border">
                                         {{ $file->product ?? '-' }}
                                     </td>
                                     <td
-                                        class="px-6 py-4 text-sm ink text-right tabular-nums font-semibold border-r border-gray-800">
+                                        class="px-6 py-4 text-sm ink text-right tabular-nums font-semibold table-cell-border">
                                         {{ $file->amount ?? '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm ink table-cell-border">
                                         {{ $file->month ?? '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm ink table-cell-border">
                                         {{ $file->date ? \Carbon\Carbon::parse($file->date)->format('d/m/y') : '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm ink table-cell-border">
                                         {{ $file->date_finish ? \Carbon\Carbon::parse($file->date_finish)->format('d/m/y') : '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm ink table-cell-border">
                                         {{ $file->duration ?? '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm ink table-cell-border">
                                         {{ $file->job_number ?? '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm table-cell-border">
                                         <span
                                             class="inline-flex px-3 py-1.5 text-xs font-bold rounded-full {{ $file->status === 'completed' ? 'bg-green-100 text-green-800 border border-green-200' : ($file->status === 'ongoing' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' : ($file->status === 'deleted' ? 'bg-gray-100 text-gray-600 border border-gray-200' : 'bg-red-100 text-red-800 border border-red-200')) }}">
                                             {{ ucfirst($file->status ?? 'pending') }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm ink table-cell-border">
                                         {{ $file->artwork ?? '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm ink table-cell-border">
                                         {{ $file->traffic ?? '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm ink table-cell-border">
                                         {{ $file->invoice_date ? \Carbon\Carbon::parse($file->invoice_date)->format('d/m/y') : '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm ink table-cell-border">
                                         {{ $file->invoice_number ?? '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm ink table-cell-border">
                                         {{ $file->sales_person ?? '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm ink table-cell-border">
                                         {{ $file->client->name ?? '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm text-gray-600 table-cell-border">
                                         <a href="mailto:{{ $file->email }}"
                                             class="hover:text-blue-600 transition-colors">
                                             {{ $file->email ?? '-' }}
                                         </a>
                                     </td>
-                                    <td class="px-6 py-4 text-sm ink border-r border-gray-800">
+                                    <td class="px-6 py-4 text-sm ink table-cell-border">
                                         {{ $file->contact_number ?? '-' }}
                                     </td>
                                     <td class="px-6 py-4 text-sm ink cursor-pointer hover:text-blue-600 transition-colors"
