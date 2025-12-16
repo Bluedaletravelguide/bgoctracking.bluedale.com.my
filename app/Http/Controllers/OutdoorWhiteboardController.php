@@ -467,7 +467,7 @@ class OutdoorWhiteboardController extends Controller
         $sheet->freezePane('A4');
 
         // === 4) Stream XLSX download ===
-        $fileName = 'outdoor_whiteboard_' . now()->format('Ymd_His') . '.xlsx';
+        $fileName = 'Outdoor_Whiteboard_' . now()->format('d-M-Y') . '.xlsx';
 
         return response()->streamDownload(function () use ($ss) {
             $writer = new Xlsx($ss);

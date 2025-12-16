@@ -971,8 +971,8 @@ class OutdoorCoordinatorController extends Controller
             });
         }
 
-        $monthName  = $month ? "month-{$month}" : 'all';
-        $filename   = "outdoor-coordinator-{$monthName}.xlsx";
+        $monthName  = $month ? "month-{$month}" : $year;
+        $filename   = "{$monthName}_Outdoor_Coordinator_List_" . now()->format('d-M-Y') . ".xlsx";
         $monthLabel = $month ? Carbon::createFromDate($year, $month, 1)->format('F Y') : null;
 
         return response()->streamDownload(function () use ($classifiedData, $monthLabel) {

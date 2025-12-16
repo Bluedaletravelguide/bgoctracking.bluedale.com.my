@@ -105,6 +105,14 @@ class DashboardController extends Controller
             $masterFilesQuery->where('product_category', $request->product_category);
         }
 
+        if ($request->filled('year')) {
+            $masterFilesQuery->where(function ($q) use ($request) {
+                $q->whereYear('date', $request->year)
+                    ->orWhereYear('date_finish', $request->year)
+                    ->orWhereYear('created_at', $request->year);
+            });
+        }
+
         // Get paginated results
         $masterFiles = $masterFilesQuery->with(['clientCompany', 'client'])->orderBy('created_at', 'desc')->paginate(50);
 

@@ -731,43 +731,11 @@ class BillboardController extends Controller
         $pdf = PDF::loadView('billboard.export', compact('billboard'))
             ->setPaper('A4', 'landscape'); // 👈 Set orientation here
 
-        return $pdf->download('billboard-detail-' . $billboard->site_number . '.pdf');
+        return $pdf->download($billboard->prefix . '_Outdoor_Detail_' . $billboard->location->name . '.pdf');
     }
 
     public function downloadPdfClient($id)
     {
-        // $billboard = Billboard::with([
-        //     'location' => function ($query) {
-        //         $query->with([
-        //             'district' => function ($query) {
-        //                 $query->with('state');
-        //             }
-        //         ]);
-        //     }
-        // ])->select(
-        //     'billboards.*',
-        //     DB::raw("CONCAT(
-        //                     CASE 
-        //                         WHEN states.name = 'Kuala Lumpur' THEN 'KL'
-        //                         WHEN states.name = 'Selangor' THEN 'SEL'
-        //                         WHEN states.name = 'Negeri Sembilan' THEN 'N9'
-        //                         WHEN states.name = 'Melaka' THEN 'MLK'
-        //                         WHEN states.name = 'Johor' THEN 'JHR'
-        //                         WHEN states.name = 'Perak' THEN 'PRK'
-        //                         WHEN states.name = 'Pahang' THEN 'PHG'
-        //                         WHEN states.name = 'Terengganu' THEN 'TRG'
-        //                         WHEN states.name = 'Kelantan' THEN 'KTN'
-        //                         WHEN states.name = 'Perlis' THEN 'PLS'
-        //                         WHEN states.name = 'Kedah' THEN 'KDH'
-        //                         WHEN states.name = 'Penang' THEN 'PNG'
-        //                         WHEN states.name = 'Sarawak' THEN 'SWK'
-        //                         WHEN states.name = 'Sabah' THEN 'SBH'
-        //                         WHEN states.name = 'Labuan' THEN 'LBN'
-        //                         WHEN states.name = 'Putrajaya' THEN 'PJY'
-        //                         ELSE states.name
-        //                     END, ' - ', districts.name
-        //                 ) as area")
-        // )->findOrFail($id);
 
         $billboard = Billboard::with(['location.district.state'])
             ->leftJoin('locations', 'billboards.location_id', '=', 'locations.id')
@@ -809,7 +777,7 @@ class BillboardController extends Controller
         $pdf = PDF::loadView('billboard.export_client', compact('billboard'))
             ->setPaper('A4', 'landscape'); // 👈 Set orientation here
 
-        return $pdf->download('billboard-detail-' . $billboard->site_number . '.pdf');
+        return $pdf->download($billboard->prefix . '_Outdoor_Detail_' . $billboard->location->name . '.pdf');
     }
 
     public function exportListPdf(Request $request)
@@ -881,21 +849,21 @@ class BillboardController extends Controller
         }
 
         // 📂 Filename
-        $filename = 'billboards-master';
-        $date = now()->format('Y-m-d');
+        $filename = 'Outdoor_Master';
+        $date = now()->format('d-M-Y');
 
         if ($request->filled('district_id') && $request->district_id !== 'all') {
             $district = District::find($request->district_id);
             if ($district) {
-                $filename = 'billboards-' . Str::slug($district->name) . '-' . $date;
+                $filename = 'Outdoor_Master_' . Str::slug($district->name) . '-' . $date;
             }
         } elseif ($request->filled('state_id') && $request->state_id !== 'all') {
             $state = State::find($request->state_id);
             if ($state) {
-                $filename = 'billboards-' . Str::slug($state->name) . '-' . $date;
+                $filename = 'Outdoor_Master_' . Str::slug($state->name) . '-' . $date;
             }
         } else {
-            $filename .= '-' . $date;
+            $filename .= '_' . $date;
         }
 
         $pdf = PDF::loadView('billboard.exportlist', compact('billboards'))
@@ -1001,21 +969,21 @@ class BillboardController extends Controller
         }
 
         // 📂 Filename
-        $filename = 'billboards-master';
-        $date = now()->format('Y-m-d');
+        $filename = 'Outdoor_Master_Client';
+        $date = now()->format('d-M-Y');
 
         if ($request->filled('district_id') && $request->district_id !== 'all') {
             $district = District::find($request->district_id);
             if ($district) {
-                $filename = 'billboards-' . Str::slug($district->name) . '-' . $date;
+                $filename = 'Outdoor_Master_Client_' . Str::slug($district->name) . '-' . $date;
             }
         } elseif ($request->filled('state_id') && $request->state_id !== 'all') {
             $state = State::find($request->state_id);
             if ($state) {
-                $filename = 'billboards-' . Str::slug($state->name) . '-' . $date;
+                $filename = 'Outdoor_Master_Client_' . Str::slug($state->name) . '-' . $date;
             }
         } else {
-            $filename .= '-' . $date;
+            $filename .= '_' . $date;
         }
 
         $pdf = PDF::loadView('billboard.exportlist_client', compact('billboards'))
@@ -1030,7 +998,7 @@ class BillboardController extends Controller
         $selectedIds = $request->input('billboard_ids');
 
         // ✅ Base name logic (match title rules in BillboardExport)
-        $baseName = "Billboard_List";
+        $baseName = "Outdoor_Stock_Inventory_List";
         if (!empty($filters['site_type']) && $filters['site_type'] !== "all") {
             $baseName = ucfirst($filters['site_type']) . "_Stock_Inventory_List";
         } elseif (!empty($filters['type']) && $filters['type'] !== "all") {
@@ -1038,7 +1006,7 @@ class BillboardController extends Controller
         }
 
         // ✅ Final filename
-        $fileName = $baseName . "_" . now()->format('dmY') . ".xlsx";
+        $fileName = $baseName . "_" . now()->format('d-M-Y') . ".xlsx";
 
         return Excel::download(new BillboardExport($filters, $selectedIds), $fileName);
     }

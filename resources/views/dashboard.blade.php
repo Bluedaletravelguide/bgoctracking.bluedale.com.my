@@ -611,6 +611,29 @@
                         </svg>
                     </div>
                 </div>
+
+                <!-- Year -->
+                <div>
+                    <label for="year"
+                        class="small-caps text-gray-600 block mb-2 text-xs font-medium uppercase tracking-wide">
+                        YEAR
+                    </label>
+                    <div class="relative">
+                        <select name="year" id="year"
+                            class="w-full h-10 pl-3 pr-10 rounded-lg border border-gray-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none transition-all shadow-sm">
+                            <option value="">All Year</option>
+                            @foreach (['2024', '2025', '2026', '2027', '2028', '2029', '2030'] as $y)
+                                <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>
+                                    {{ $y }}</option>
+                            @endforeach
+                        </select>
+                        <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                </div>
             </div>
 
             <!-- Filter Actions -->
@@ -624,7 +647,7 @@
                     Apply Filters
                 </button> --}}
 
-                @if (request('search') || request('status') || request('month') || request('product_category'))
+                @if (request('search') || request('status') || request('month') || request('product_category') || request('year'))
                     <a href="{{ route('dashboard') }}"
                         class="btn-ghost inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-gray-100 border border-gray-200">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -646,7 +669,7 @@
             </div>
 
             <!-- Active Filter Chips -->
-            @if (request('search') || request('status') || request('month') || request('product_category'))
+            @if (request('search') || request('status') || request('month') || request('product_category') || request('year'))
                 <div class="pt-4 border-t border-gray-100">
                     <div class="flex flex-wrap items-center gap-2">
                         <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Active Filters:</span>
@@ -714,6 +737,21 @@
                                 </button>
                             </span>
                         @endif
+
+                        @if (request('year'))
+                            <span
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-100 text-red-800 text-xs font-medium border border-red-200 shadow-sm">
+                                Year: {{ request('year') }}
+                                <button type="button"
+                                    onclick="document.getElementById('year').value=''; document.getElementById('filterForm').submit();"
+                                    class="ml-1 hover:text-red-900 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </span>
+                        @endif
                     </div>
                 </div>
             @endif
@@ -727,6 +765,7 @@
             const statusSelect = document.getElementById('status');
             const monthSelect = document.getElementById('month');
             const categorySelect = document.getElementById('product_category');
+            const yearSelect = document.getElementById('year');
 
             // Debounce function
             function debounce(func, wait) {
@@ -751,12 +790,14 @@
                 const status = statusSelect.value;
                 const month = monthSelect.value;
                 const category = categorySelect.value;
+                const year = yearSelect.value;
 
                 // Only add non-empty values
                 if (search) params.set('search', search);
                 if (status) params.set('status', status);
                 if (month) params.set('month', month);
                 if (category) params.set('product_category', category);
+                if (year) params.set('year', year);
 
                 // Update URL without page parameter to reset pagination
                 const newUrl = url.pathname + '?' + params.toString();
@@ -781,6 +822,10 @@
 
             if (categorySelect) {
                 categorySelect.addEventListener('change', autoSubmit);
+            }
+
+            if (yearSelect) {
+                yearSelect.addEventListener('change', autoSubmit);
             }
 
             // Prevent form submission from triggering page reload for auto-submit

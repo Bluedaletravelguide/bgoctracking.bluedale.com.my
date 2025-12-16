@@ -315,7 +315,7 @@ class OutdoorOngoingJobController extends Controller
     public function exportMatrix(Request $req)
     {
         $tz      = 'Asia/Kuala_Lumpur';
-        $today   = now($tz)->format('d/m/Y');
+        $today   = now($tz)->format('d-M-Y');
         $year    = (int)($req->input('year') ?: now($tz)->year);
         $product = trim((string)$req->input('product', ''));
 
@@ -363,7 +363,7 @@ class OutdoorOngoingJobController extends Controller
         ]);
 
 
-        $title = "Outdoor - Monthly - {$today} - {$year}";
+        $title = "{$year} - Outdoor - Monthly - Ongoing - Job - {$today}";
         $file  = \Illuminate\Support\Str::slug($title, '_') . '.xlsx';
 
         if ($siteRows->isEmpty()) {
