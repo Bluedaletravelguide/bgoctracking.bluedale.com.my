@@ -1071,13 +1071,13 @@ class KltgCoordinatorController extends Controller
 
         // ---- Filename (.xls for HTML-Excel)
         $filename = sprintf(
-            'kltg_%s_%s.xls',
-            strtolower($activeSubcat),
-            now()->format('Ymd_His')
+            'KLTG_COORDINATOR_LIST_%s_%s.xls',
+            strtoupper($activeSubcat),
+            now()->format('d-M-Y')
         );
 
         $headers = [
-            'Content-Type'        => 'application/vnd.ms-excel',
+            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             'Pragma'              => 'no-cache',
             'Cache-Control'       => 'must-revalidate, post-check=0, pre-check=0',

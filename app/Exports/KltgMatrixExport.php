@@ -29,13 +29,20 @@ class KltgMatrixExport
         $this->catKeys   = $catKeys;
     }
 
-    private function col(int $i): string {
-        $s=''; while ($i>0){ $m=($i-1)%26; $s=chr(65+$m).$s; $i=intdiv($i-1,26);} return $s;
+    private function col(int $i): string
+    {
+        $s = '';
+        while ($i > 0) {
+            $m = ($i - 1) % 26;
+            $s = chr(65 + $m) . $s;
+            $i = intdiv($i - 1, 26);
+        }
+        return $s;
     }
 
     private function defaultMonths(): array
     {
-        return ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     }
 
     /**
@@ -73,7 +80,7 @@ class KltgMatrixExport
     {
         if (!$hex) return null;
         $h = ltrim(trim($hex), '#');
-        if (strlen($h) === 6) return 'FF'.strtoupper($h); // tambah alpha
+        if (strlen($h) === 6) return 'FF' . strtoupper($h); // tambah alpha
         if (strlen($h) === 8) return strtoupper($h);      // sudah ARGB
         return null;
     }
@@ -82,15 +89,16 @@ class KltgMatrixExport
     {
         $h = ltrim($hex, '#');
         if (strlen($h) < 6) return Color::COLOR_BLACK;
-        $r = hexdec(substr($h,0,2));
-        $g = hexdec(substr($h,2,2));
-        $b = hexdec(substr($h,4,2));
-        $yiq = (($r*299)+($g*587)+($b*114))/1000;
+        $r = hexdec(substr($h, 0, 2));
+        $g = hexdec(substr($h, 2, 2));
+        $b = hexdec(substr($h, 4, 2));
+        $yiq = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
         return $yiq >= 150 ? Color::COLOR_BLACK : Color::COLOR_WHITE;
     }
 
     /** Shade every other row (odd rows) with a super-light blue */
-    private function shadeOddRows(Worksheet $sheet, int $firstDataRow, ?int $lastDataRow = null, int $firstCol = 1, ?int $lastCol = null): void {
+    private function shadeOddRows(Worksheet $sheet, int $firstDataRow, ?int $lastDataRow = null, int $firstCol = 1, ?int $lastCol = null): void
+    {
         $lastDataRow = $lastDataRow ?: (int)$sheet->getHighestRow();
         $lastCol     = $lastCol ?: Coordinate::columnIndexFromString($sheet->getHighestColumn());
 
@@ -99,8 +107,8 @@ class KltgMatrixExport
         for ($r = $firstDataRow; $r <= $lastDataRow; $r += 2) {
             $range = $this->col($firstCol) . $r . ':' . $this->col($lastCol) . $r;
             $sheet->getStyle($range)->getFill()
-                  ->setFillType(Fill::FILL_SOLID)
-                  ->getStartColor()->setARGB($argb);
+                ->setFillType(Fill::FILL_SOLID)
+                ->getStartColor()->setARGB($argb);
         }
     }
 
@@ -121,11 +129,11 @@ class KltgMatrixExport
 
             // Thick left border for the month
             $sheet->getStyle($this->col($left)  . $firstDataRow . ':' . $this->col($left)  . $lastDataRow)
-                  ->getBorders()->getLeft()->setBorderStyle(Border::BORDER_MEDIUM);
+                ->getBorders()->getLeft()->setBorderStyle(Border::BORDER_MEDIUM);
 
             // Thick right border for the month
             $sheet->getStyle($this->col($right) . $firstDataRow . ':' . $this->col($right) . $lastDataRow)
-                  ->getBorders()->getRight()->setBorderStyle(Border::BORDER_MEDIUM);
+                ->getBorders()->getRight()->setBorderStyle(Border::BORDER_MEDIUM);
         }
     }
 
@@ -160,16 +168,20 @@ class KltgMatrixExport
         // 3) Make the month header rows have thick bottom border
         $headerTopRow = 1;
         $headerLabelRow = 2;
-        $sheet->getStyle($this->col($firstMonthColIndex).$headerTopRow.':'.$this->col($lastColIdx).$headerLabelRow)
-              ->getBorders()->getBottom()->setBorderStyle(Border::BORDER_MEDIUM);
+        $sheet->getStyle($this->col($firstMonthColIndex) . $headerTopRow . ':' . $this->col($lastColIdx) . $headerLabelRow)
+            ->getBorders()->getBottom()->setBorderStyle(Border::BORDER_MEDIUM);
 
         // Autosize + freeze
-        for ($i=1; $i<=$lastColIdx; $i++) $sheet->getColumnDimension($this->col($i))->setAutoSize(true);
+        for ($i = 1; $i <= $lastColIdx; $i++) $sheet->getColumnDimension($this->col($i))->setAutoSize(true);
         $sheet->freezePane('K3'); // Freeze columns A-J (No to End) and rows 1-2 (headers)
 
         return response()->streamDownload(function () use ($ss) {
-            (new Xlsx($ss))->save('php://output');
-        }, $filename, ['Content-Type'=>'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+            $writer = new Xlsx($ss);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+        ]);
     }
 
 
@@ -184,7 +196,10 @@ class KltgMatrixExport
 
         $months = null;
         foreach ($byYear as $records) {
-            if (!empty($records)) { $months = array_column($records[0]['matrix'], 'monthName'); break; }
+            if (!empty($records)) {
+                $months = array_column($records[0]['matrix'], 'monthName');
+                break;
+            }
         }
         if (!$months) $months = $this->defaultMonths();
 
@@ -237,32 +252,36 @@ class KltgMatrixExport
             // 3) Make the month header rows have thick bottom border
             $headerTopRow = $headerStartRow;
             $headerLabelRow = $headerStartRow + 1;
-            $sheet->getStyle($this->col($firstMonthColIndex).$headerTopRow.':'.$this->col($lastColIdx).$headerLabelRow)
-                  ->getBorders()->getBottom()->setBorderStyle(Border::BORDER_MEDIUM);
+            $sheet->getStyle($this->col($firstMonthColIndex) . $headerTopRow . ':' . $this->col($lastColIdx) . $headerLabelRow)
+                ->getBorders()->getBottom()->setBorderStyle(Border::BORDER_MEDIUM);
 
             $row += 1; // spacer antar tahun
         }
 
-        for ($i=1; $i<=$lastColIdx; $i++) $sheet->getColumnDimension($this->col($i))->setAutoSize(true);
+        for ($i = 1; $i <= $lastColIdx; $i++) $sheet->getColumnDimension($this->col($i))->setAutoSize(true);
 
         // Freeze columns A-J so they stay visible when scrolling right
         $sheet->freezePane('K1');
 
         return response()->streamDownload(function () use ($ss) {
-            (new Xlsx($ss))->save('php://output');
-        }, $filename, ['Content-Type'=>'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+            $writer = new Xlsx($ss);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+        ]);
     }
 
     /** ---------- Helpers to draw header & record blocks ---------- */
     private function writeHeader(Worksheet $sheet, int $topRow, array $months): array
     {
-        $fixedHeaders = ['No','Month','Created At','Company','Product','Publication','Edition','Status','Start','End'];
+        $fixedHeaders = ['No', 'Month', 'Created At', 'Company', 'Product', 'Publication', 'Edition', 'Status', 'Start', 'End'];
 
         $colIdx = 1;
         foreach ($fixedHeaders as $h) {
             $c = $this->col($colIdx);
             $sheet->setCellValue("{$c}{$topRow}", $h);
-            $sheet->mergeCells("{$c}{$topRow}:{$c}".($topRow+1));
+            $sheet->mergeCells("{$c}{$topRow}:{$c}" . ($topRow + 1));
             $colIdx++;
         }
 
@@ -270,11 +289,11 @@ class KltgMatrixExport
             $startColIdx = $colIdx;
             foreach ($this->catLabels as $lab) {
                 $c = $this->col($colIdx);
-                $sheet->setCellValue("{$c}".($topRow+1), $lab);
+                $sheet->setCellValue("{$c}" . ($topRow + 1), $lab);
                 $colIdx++;
             }
             $c1 = $this->col($startColIdx);
-            $c2 = $this->col($colIdx-1);
+            $c2 = $this->col($colIdx - 1);
             $sheet->mergeCells("{$c1}{$topRow}:{$c2}{$topRow}");
             $sheet->setCellValue("{$c1}{$topRow}", $monthName);
         }
@@ -282,14 +301,14 @@ class KltgMatrixExport
         $lastColIdx = $colIdx - 1;
         $lastCol    = $this->col($lastColIdx);
 
-        $sheet->getStyle("A{$topRow}:{$lastCol}".($topRow+1))->applyFromArray([
-            'font'=>['bold'=>true],
-            'alignment'=>[
-                'horizontal'=>Alignment::HORIZONTAL_CENTER,
-                'vertical'=>Alignment::VERTICAL_CENTER
+        $sheet->getStyle("A{$topRow}:{$lastCol}" . ($topRow + 1))->applyFromArray([
+            'font' => ['bold' => true],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER
             ],
-            'borders'=>['allBorders'=>['borderStyle'=>Border::BORDER_THIN]],
-            'fill'=>['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FFE5E5E5']],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FFE5E5E5']],
         ]);
 
         return [$lastColIdx, $lastCol];
@@ -303,48 +322,48 @@ class KltgMatrixExport
         $colIdx = 1;
 
         // A: No
-        $sheet->setCellValue($this->col($colIdx++).$row, $s['no']);
+        $sheet->setCellValue($this->col($colIdx++) . $row, $s['no']);
 
         // B: Month (teks)
-        $sheet->setCellValue($this->col($colIdx++).$row, $s['month']);
+        $sheet->setCellValue($this->col($colIdx++) . $row, $s['month']);
 
         // C: Created At (Excel date)
         if (!empty($s['created_at'])) {
             $excelVal = ExcelDate::PHPToExcel(Carbon::parse($s['created_at'])->getTimestamp());
-            $cell = $this->col($colIdx).$row;
+            $cell = $this->col($colIdx) . $row;
             $sheet->setCellValue($cell, $excelVal);
             $sheet->getStyle($cell)->getNumberFormat()->setFormatCode('d/m/yy');
         } else {
-            $sheet->setCellValue($this->col($colIdx).$row, '');
+            $sheet->setCellValue($this->col($colIdx) . $row, '');
         }
         $colIdx++;
 
         // D–H: Company, Product, Publication, Edition, Status (teks)
-        $sheet->setCellValue($this->col($colIdx++).$row, $s['company'] ?? '');
-        $sheet->setCellValue($this->col($colIdx++).$row, $s['product'] ?? '');
-        $sheet->setCellValue($this->col($colIdx++).$row, $s['publication'] ?? '');
-        $sheet->setCellValue($this->col($colIdx++).$row, $s['edition'] ?? '');
-        $sheet->setCellValue($this->col($colIdx++).$row, $s['status'] ?? '');
+        $sheet->setCellValue($this->col($colIdx++) . $row, $s['company'] ?? '');
+        $sheet->setCellValue($this->col($colIdx++) . $row, $s['product'] ?? '');
+        $sheet->setCellValue($this->col($colIdx++) . $row, $s['publication'] ?? '');
+        $sheet->setCellValue($this->col($colIdx++) . $row, $s['edition'] ?? '');
+        $sheet->setCellValue($this->col($colIdx++) . $row, $s['status'] ?? '');
 
         // I: Start (Excel date)
         if (!empty($s['start'])) {
             $excelVal = ExcelDate::PHPToExcel(Carbon::parse($s['start'])->getTimestamp());
-            $cell = $this->col($colIdx).$row;
+            $cell = $this->col($colIdx) . $row;
             $sheet->setCellValue($cell, $excelVal);
             $sheet->getStyle($cell)->getNumberFormat()->setFormatCode('d/m/yy');
         } else {
-            $sheet->setCellValue($this->col($colIdx).$row, '');
+            $sheet->setCellValue($this->col($colIdx) . $row, '');
         }
         $colIdx++;
 
         // J: End (Excel date)
         if (!empty($s['end'])) {
             $excelVal = ExcelDate::PHPToExcel(Carbon::parse($s['end'])->getTimestamp());
-            $cell = $this->col($colIdx).$row;
+            $cell = $this->col($colIdx) . $row;
             $sheet->setCellValue($cell, $excelVal);
             $sheet->getStyle($cell)->getNumberFormat()->setFormatCode('d/m/yy');
         } else {
-            $sheet->setCellValue($this->col($colIdx).$row, '');
+            $sheet->setCellValue($this->col($colIdx) . $row, '');
         }
         $colIdx++;
 
@@ -352,7 +371,7 @@ class KltgMatrixExport
         // 12 bulan × n kategori → baris status (row) & baris tanggal (row+1)
         foreach ($rec['matrix'] as $m) {
             foreach ($this->catKeys as $k) {
-                $cell = $this->col($colIdx).$row;
+                $cell = $this->col($colIdx) . $row;
 
                 $val    = (string)($m['cats'][$k]['status'] ?? '');
                 $hex    = $m['cats'][$k]['color'] ?? null; // <-- warna dari DB (kolom color)
@@ -363,20 +382,20 @@ class KltgMatrixExport
                     $argb = $this->hexToARGB($hex);
                     if ($argb) {
                         $sheet->getStyle($cell)->getFill()->setFillType(Fill::FILL_SOLID)
-                              ->getStartColor()->setARGB($argb);
+                            ->getStartColor()->setARGB($argb);
                         // font kontras agar kebaca saat di print
                         $sheet->getStyle($cell)->getFont()->getColor()
-                              ->setARGB($this->contrastFontColor($hex));
+                            ->setARGB($this->contrastFontColor($hex));
                     }
                 }
                 // 2) Fallback: pakai peta status (kalau tidak ada color)
                 elseif ($argb = $this->statusColor($val)) {
                     $sheet->getStyle($cell)->getFill()->setFillType(Fill::FILL_SOLID)
-                          ->getStartColor()->setARGB($argb);
+                        ->getStartColor()->setARGB($argb);
                     // pakai kontras kasar berdasar fallback rgb (drop 'FF' alpha)
                     $rgb = substr($argb, 2);
                     $sheet->getStyle($cell)->getFont()->getColor()
-                          ->setARGB($this->contrastFontColor('#'.$rgb));
+                        ->setARGB($this->contrastFontColor('#' . $rgb));
                 }
 
                 // Tanggal (di baris berikutnya)
@@ -385,20 +404,20 @@ class KltgMatrixExport
                     $dateStr = Carbon::parse($m['cats'][$k]['start'])->format('d/m/y');
                 }
                 if (!empty($m['cats'][$k]['end'])) {
-                    $dateStr = trim($dateStr.' – '.Carbon::parse($m['cats'][$k]['end'])->format('d/m/y'));
+                    $dateStr = trim($dateStr . ' – ' . Carbon::parse($m['cats'][$k]['end'])->format('d/m/y'));
                 }
-                $sheet->setCellValue($this->col($colIdx).($row+1), $dateStr);
+                $sheet->setCellValue($this->col($colIdx) . ($row + 1), $dateStr);
 
                 $colIdx++;
             }
         }
 
         // style block (borders & align)
-        $sheet->getStyle("A{$row}:".$this->col($lastColIdx).($row+1))
+        $sheet->getStyle("A{$row}:" . $this->col($lastColIdx) . ($row + 1))
             ->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-        $sheet->getStyle($this->col(11).$row.":".$this->col($lastColIdx).($row+1))
+        $sheet->getStyle($this->col(11) . $row . ":" . $this->col($lastColIdx) . ($row + 1))
             ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle("A{$row}:".$this->col($lastColIdx).($row+1))
+        $sheet->getStyle("A{$row}:" . $this->col($lastColIdx) . ($row + 1))
             ->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
 
         return $row + 2; // next start row

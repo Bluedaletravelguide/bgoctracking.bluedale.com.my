@@ -1905,7 +1905,7 @@ class MasterFileController extends Controller
             'Start Date',
             'End Date',
             'Duration',
-            'Job', // Mapped from product_category
+            'JO #', // Mapped from product_category
             'Status',
             'Artwork',
             'Traffic',
@@ -2006,7 +2006,7 @@ class MasterFileController extends Controller
         }
         $sheet->freezePane('A3');
 
-        $filename = 'MASTER_PROPOSAL CONFIRMATION_' . now()->format('Ymd_His') . '.xlsx';
+        $filename = 'MASTER_PROPOSAL_CONFIRMATION_' . now()->format('d-M-Y') . '.xlsx';
         $writer = new Xlsx($ss);
 
         return response()->streamDownload(function () use ($writer, $ss) {
@@ -2134,7 +2134,7 @@ class MasterFileController extends Controller
                 'Start Date',
                 'End Date',
                 'Duration',
-                'Job',
+                'JO #',
                 'Status',
                 'Artwork',
                 'Traffic',
@@ -2415,7 +2415,7 @@ class MasterFileController extends Controller
         $sheet->freezePane('A3');
 
         $writer = new Xlsx($ss);
-        $filename = 'KLTG_MASTER_CLIENTELE' . now()->format('Ymd_His') . '.xlsx';
+        $filename = 'KLTG_MASTER_CLIENTELE_' . now()->format('d-M-Y') . '.xlsx';
         return response()->streamDownload(function () use ($writer, $ss) {
             $writer->save('php://output');
             $ss->disconnectWorksheets();
@@ -2645,7 +2645,7 @@ class MasterFileController extends Controller
         $sheet->freezePane('A3');
 
         $writer = new Xlsx($ss);
-        $filename = 'OUTDOOR_MASTER_CLIENTELE_' . now()->format('Ymd_His') . '.xlsx';
+        $filename = 'OUTDOOR_MASTER_CLIENTELE_' . now()->format('d-M-Y') . '.xlsx';
 
         return response()->streamDownload(function () use ($writer, $ss) {
             $writer->save('php://output');
