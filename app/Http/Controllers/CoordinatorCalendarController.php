@@ -20,20 +20,41 @@ class CoordinatorCalendarController extends Controller
 
     // Date columns to emit as events (all non-null)
     private const MEDIA_DATE_COLS = [
-        'artwork_reminder','material_record','artwork_done','send_chop_sign','chop_sign_approval',
-        'em_date_write','em_date_to_post','em_post_date',
-        'video_done','pending_approval','video_approved','video_scheduled','video_posted',
-        'article_done','article_approved','article_scheduled','article_posted',
+        'artwork_reminder',
+        'material_record',
+        'artwork_done',
+        'send_chop_sign',
+        'chop_sign_approval',
+        'em_date_write',
+        'em_date_to_post',
+        'em_post_date',
+        'video_done',
+        'pending_approval',
+        'video_approved',
+        'video_scheduled',
+        'video_posted',
+        'article_done',
+        'article_approved',
+        'article_scheduled',
+        'article_posted',
     ];
 
     private const KLTG_DATE_COLS = [
-        'site_date','payment_date','material_date','artwork_date',
-        'received_approval','sent_to_printer','collection_printer',
-        'installation','dismantle','next_follow_up',
+        'site_date',
+        'payment_date',
+        'material_date',
+        'artwork_date',
+        'received_approval',
+        'sent_to_printer',
+        'collection_printer',
+        'installation',
+        'dismantle',
+        'next_follow_up',
     ];
 
     private const OUTDOOR_DATE_COLS = [
-        'total_artwork_date','pending_date',
+        'total_artwork_date',
+        'pending_date',
     ];
 
     public function index(Request $request)
@@ -62,17 +83,32 @@ class CoordinatorCalendarController extends Controller
 
             if ($module === '' || $module === 'media') {
                 $events = array_merge($events, $this->fetchMediaCoordinatorEvents(
-                    $start, $end, $year, $month, $companyQ, $milestone
+                    $start,
+                    $end,
+                    $year,
+                    $month,
+                    $companyQ,
+                    $milestone
                 ));
             }
             if ($module === '' || $module === 'kltg') {
                 $events = array_merge($events, $this->fetchKltgEvents(
-                    $start, $end, $year, $month, $companyQ, $milestone
+                    $start,
+                    $end,
+                    $year,
+                    $month,
+                    $companyQ,
+                    $milestone
                 ));
             }
             if ($module === '' || $module === 'outdoor') {
                 $events = array_merge($events, $this->fetchOutdoorEvents(
-                    $start, $end, $year, $month, $companyQ, $milestone
+                    $start,
+                    $end,
+                    $year,
+                    $month,
+                    $companyQ,
+                    $milestone
                 ));
             }
 
@@ -105,7 +141,7 @@ class CoordinatorCalendarController extends Controller
             // Fallback: if INFORMATION_SCHEMA is restricted, just use what we can
             $cols = Schema::getColumnListing($table);
             // crude filter: keep names that look like dates
-            $guess = array_filter($cols, fn($c) => str_contains($c,'date') || str_contains($c,'_at'));
+            $guess = array_filter($cols, fn($c) => str_contains($c, 'date') || str_contains($c, '_at'));
             return array_values(array_diff($guess, $blacklist));
         }
     }
@@ -131,8 +167,11 @@ class CoordinatorCalendarController extends Controller
     /** Check if a single column exists (safe) */
     private function colExists(string $table, string $col): bool
     {
-        try { return Schema::hasColumn($table, $col); }
-        catch (\Throwable $e) { return true; } // fail open
+        try {
+            return Schema::hasColumn($table, $col);
+        } catch (\Throwable $e) {
+            return true;
+        } // fail open
     }
 
     private function toDateString($iso)
@@ -168,7 +207,7 @@ class CoordinatorCalendarController extends Controller
         }
 
         // Limit to rows that have at least one date in range if start/end supplied
-        $dateCols = $this->dateColumns('media_coordinator_trackings', ['created_at','updated_at']);
+        $dateCols = $this->dateColumns('media_coordinator_trackings', ['created_at', 'updated_at']);
         Log::info("media_coordinator_trackings date columns used", $dateCols);
         $q->when($start && $end, function ($qq) use ($dateCols, $start, $end) {
             $qq->where(function ($or) use ($dateCols, $start, $end) {
@@ -213,11 +252,11 @@ class CoordinatorCalendarController extends Controller
                     'extendedProps' => [
                         'module'        => 'media',
                         'table'         => $tbl,
-                        'milestone'     => $this->milestoneLabel($col),
+                        'milestone'     => $this->milestoneLabel($col) . $this->getStatusForColumn($row, $col),
                         'company'       => $company,
                         'objective_raw' => $objective,
                         'title_raw'     => $title,
-                        'master_file_id'=> (int)$row->master_file_id,
+                        'master_file_id' => (int)$row->master_file_id,
                         'year'          => $row->year,
                         'month'         => $row->month,
                         'row_id'        => (int)$row->id,
@@ -231,76 +270,76 @@ class CoordinatorCalendarController extends Controller
 
     /** KLTG */
     private function fetchKltgEvents($start, $end, $year, $month, $companyQ, $milestone)
-{
-    $tbl = 'kltg_coordinator_lists';
+    {
+        $tbl = 'kltg_coordinator_lists';
 
-    $q = DB::table($tbl . ' as k')
-        ->leftJoin('master_files as mf', 'mf.id', '=', 'k.master_file_id')
-        ->select('k.*', 'mf.company as mf_company', 'mf.product as mf_product')
-        ->when($year !== '', fn($qq) => $qq->where('k.year', (int)$year))
-        ->when($month !== '', fn($qq) => $qq->where('k.month', (int)$month));
+        $q = DB::table($tbl . ' as k')
+            ->leftJoin('master_files as mf', 'mf.id', '=', 'k.master_file_id')
+            ->select('k.*', 'mf.company as mf_company', 'mf.product as mf_product')
+            ->when($year !== '', fn($qq) => $qq->where('k.year', (int)$year))
+            ->when($month !== '', fn($qq) => $qq->where('k.month', (int)$month));
 
-    if ($companyQ !== '') {
-        $like = '%'.$this->escapeLike($companyQ).'%';
-        $q->where(function ($w) use ($like) {
-            $w->orWhere('k.client', 'like', $like)
-              ->orWhere('mf.company', 'like', $like);
-        });
-    }
-
-    // Use all real DATE/DATETIME/TIMESTAMP columns from KLTG table
-    $dateCols = $this->dateColumns($tbl, ['created_at','updated_at','masterfile_created_at']);
-
-    // Restrict by calendar visible range if provided
-    $q->when($start && $end, function ($qq) use ($dateCols, $start, $end) {
-        $qq->where(function ($or) use ($dateCols, $start, $end) {
-            foreach ($dateCols as $col) {
-                $or->orWhereBetween("k.$col", [$start, $end]);
-            }
-        });
-    });
-
-    $rows = $q->limit(5000)->get();
-
-    $events = [];
-    foreach ($rows as $row) {
-        foreach ($dateCols as $col) {
-            if ($milestone !== '' && $milestone !== $col) continue;
-
-            $val = $row->{$col} ?? null;
-            if (!$val) continue;
-            if ($start && $end && !($val >= $start && $val <= $end)) continue;
-
-            // Title / Company / Objective with master_files fallbacks
-            $title    = $this->pickFirst([$row->product ?? null, $row->site ?? null, $row->mf_product ?? null], 'KLTG');
-            $company  = $this->pickFirst([$row->client ?? null, $row->mf_company ?? null], '—');
-            $objective= $this->pickFirst([$row->status ?? null, $row->next_follow_up_note ?? null], 'KLTG');
-
-            $events[] = [
-                'id'    => "kltg:{$row->id}:{$col}",
-                'title' => "{$title} – {$company} – {$this->humanize($objective)}",
-                'start' => $val,
-                'color' => self::COLORS['kltg'],
-                'allDay' => true,
-                'extendedProps' => [
-                    'module'        => 'kltg',
-                    'table'         => $tbl,
-                    'milestone'     => $this->milestoneLabel($col),
-                    'company'       => $company,
-                    'objective_raw' => $objective,
-                    'title_raw'     => $title,
-                    'master_file_id'=> (int)$row->master_file_id,
-                    'year'          => $row->year,
-                    'month'         => $row->month,
-                    'row_id'        => (int)$row->id,
-                    'site'          => $row->site ?? null,
-                ],
-            ];
+        if ($companyQ !== '') {
+            $like = '%' . $this->escapeLike($companyQ) . '%';
+            $q->where(function ($w) use ($like) {
+                $w->orWhere('k.client', 'like', $like)
+                    ->orWhere('mf.company', 'like', $like);
+            });
         }
-    }
 
-    return $events;
-}
+        // Use all real DATE/DATETIME/TIMESTAMP columns from KLTG table
+        $dateCols = $this->dateColumns($tbl, ['created_at', 'updated_at', 'masterfile_created_at']);
+
+        // Restrict by calendar visible range if provided
+        $q->when($start && $end, function ($qq) use ($dateCols, $start, $end) {
+            $qq->where(function ($or) use ($dateCols, $start, $end) {
+                foreach ($dateCols as $col) {
+                    $or->orWhereBetween("k.$col", [$start, $end]);
+                }
+            });
+        });
+
+        $rows = $q->limit(5000)->get();
+
+        $events = [];
+        foreach ($rows as $row) {
+            foreach ($dateCols as $col) {
+                if ($milestone !== '' && $milestone !== $col) continue;
+
+                $val = $row->{$col} ?? null;
+                if (!$val) continue;
+                if ($start && $end && !($val >= $start && $val <= $end)) continue;
+
+                // Title / Company / Objective with master_files fallbacks
+                $title    = $this->pickFirst([$row->product ?? null, $row->site ?? null, $row->mf_product ?? null], 'KLTG');
+                $company  = $this->pickFirst([$row->client ?? null, $row->mf_company ?? null], '—');
+                $objective = $this->pickFirst([$row->status ?? null, $row->next_follow_up_note ?? null], 'KLTG');
+
+                $events[] = [
+                    'id'    => "kltg:{$row->id}:{$col}",
+                    'title' => "{$title} – {$company} – {$this->humanize($objective)}",
+                    'start' => $val,
+                    'color' => self::COLORS['kltg'],
+                    'allDay' => true,
+                    'extendedProps' => [
+                        'module'        => 'kltg',
+                        'table'         => $tbl,
+                        'milestone'     => $this->milestoneLabel($col) . $this->getStatusForColumn($row, $col),
+                        'company'       => $company,
+                        'subcategory'   => $row->subcategory,
+                        'title_raw'     => $title,
+                        'master_file_id' => (int)$row->master_file_id,
+                        'year'          => $row->year,
+                        'month'         => $row->month,
+                        'row_id'        => (int)$row->id,
+                        'site'          => $row->site ?? null,
+                    ],
+                ];
+            }
+        }
+
+        return $events;
+    }
 
 
     /** OUTDOOR */
@@ -322,7 +361,7 @@ class CoordinatorCalendarController extends Controller
             });
         }
 
-        $dateCols = $this->dateColumns('outdoor_coordinator_trackings', ['created_at','updated_at']);
+        $dateCols = $this->dateColumns('outdoor_coordinator_trackings', ['created_at', 'updated_at']);
         Log::info("outdoor_coordinator_trackings date columns used", $dateCols);
         $q->when($start && $end, function ($qq) use ($dateCols, $start, $end) {
             $qq->where(function ($or) use ($dateCols, $start, $end) {
@@ -345,7 +384,7 @@ class CoordinatorCalendarController extends Controller
 
                 $title    = $this->pickFirst([$row->mf_product ?? null], 'Outdoor');
                 $company  = $row->mf_company ?? '—';
-                $objective= $this->pickFirst([$row->remarks ?? null], 'Outdoor');
+                $objective = $this->pickFirst([$row->remarks ?? null], 'Outdoor');
 
                 $events[] = [
                     'id'    => "outdoor:{$row->id}:{$col}",
@@ -356,11 +395,11 @@ class CoordinatorCalendarController extends Controller
                     'extendedProps' => [
                         'module'        => 'outdoor',
                         'table'         => $tbl,
-                        'milestone'     => $this->milestoneLabel($col),
+                        'milestone'     => $this->milestoneLabel($col) . $this->getStatusForColumn($row, $col),
                         'company'       => $company,
                         'objective_raw' => $objective,
                         'title_raw'     => $title,
-                        'master_file_id'=> (int)$row->master_file_id,
+                        'master_file_id' => (int)$row->master_file_id,
                         'year'          => $row->year,
                         'month'         => $row->month,
                         'row_id'        => (int)$row->id,
@@ -387,6 +426,52 @@ class CoordinatorCalendarController extends Controller
         $t = str_replace(['_', '-'], ' ', $text);
         $t = preg_replace('/\s+/', ' ', $t);
         return ucfirst(trim($t));
+    }
+
+    private function getStatusForColumn($row, string $col): string
+    {
+        // Allow per-column alternate status field names (e.g. dismantle -> dismantle_note)
+        $alternateMap = [
+            'dismantle' => ["{$col}_note", "{$col}_note_status"],
+            'installation' => ["{$col}_note", "{$col}_note_status"],
+            'collection_printer' => ["{$col}_note", "{$col}_note_status"],
+            'sent_to_printer' => ["{$col}_note", "{$col}_note_status"],
+            'received_approval' => ["{$col}_note", "{$col}_note_status"],
+        ];
+
+        $candidates = [];
+
+        if (isset($alternateMap[$col])) {
+            $candidates = array_merge($candidates, $alternateMap[$col]);
+        }
+
+        // primary candidate
+        $candidates[] = "{$col}_status";
+
+        // derive a base name by stripping common suffixes
+        $base = preg_replace('/(_date|_record|_reminder|_done|_approval|_post|_pending|_installation)$/', '', $col);
+        if ($base !== $col) {
+            $candidates[] = $base;
+            $candidates[] = "{$base}_status";
+        }
+
+        // Also try removing a trailing '_date' specifically (fallback)
+        $base2 = preg_replace('/_date$/', '', $col);
+        if ($base2 !== $col && $base2 !== $base) {
+            $candidates[] = $base2;
+            $candidates[] = "{$base2}_status";
+        }
+
+        foreach ($candidates as $sc) {
+            if (isset($row->{$sc}) && $row->{$sc} !== null && trim((string)$row->{$sc}) !== '') {
+                $statusVal = $row->{$sc};
+                $formatted = str_replace(['_', '-'], ' ', (string)$statusVal);
+                $formatted = preg_replace('/\s+/', ' ', $formatted);
+                return ' - ' . ucfirst(trim($formatted));
+            }
+        }
+
+        return '';
     }
 
     private function milestoneLabel(string $col): string
