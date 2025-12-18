@@ -185,10 +185,14 @@
                 <h1 class="text-2xl font-bold text-gray-900">Billboard Availability</h1>
                 <p class="mt-1 text-sm text-gray-600">View and manage billboard availability across locations</p>
             </div>
-            <div class="mt-4 md:mt-0">
-                <button
-                    class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                    Export Data
+            <div class="mt-4 md:mt-0 flex gap-2">
+                <button id="previewExportBtn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    Preview Export
+                </button>
+                <button id="dataTableExportBtn"
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    Export Excel
                 </button>
             </div>
         </div>
@@ -407,6 +411,48 @@
         </div>
         <!-- Table End -->
     </div>
+
+    <!-- Preview Export Modal -->
+    <div id="previewExportModal" class="fixed inset-0 z-50 hidden">
+        <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg w-full max-w-4xl max-h-[70vh] overflow-hidden shadow-xl flex flex-col z-50">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900">Monthly Availability Preview</h3>
+                    <button id="closePreviewModalBtn" type="button" class="text-gray-400 hover:text-gray-600"
+                        onclick="closePreviewModal()">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <!-- Content -->
+                <div class="p-4 flex-grow overflow-y-auto">
+                    <div id="previewContent" class="text-sm">
+                        <!-- Loading State -->
+                        <div class="text-center py-8">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                            <p class="text-gray-600">Loading preview...</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Footer -->
+                <div class="flex justify-end p-4 border-t bg-gray-50">
+                    <button id="closePreviewModalFooterBtn" type="button"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 mr-2">
+                        Close
+                    </button>
+                    <button id="downloadFromPreviewBtn" type="button"
+                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                        Download Full Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Preview Export Modal End -->
 
     <!-- Remarks Modal -->
     <div class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
@@ -2229,13 +2275,7 @@
                         emptyTable: "No records found. Please apply at least one filter."
                     },
                     dom: "lBrtip",
-                    buttons: [{
-                        text: "Export Excel",
-                        className: "button w-28 rounded-full shadow-md mr-1 mb-2 bg-green-600 text-white",
-                        action: function(e, dt, node, config) {
-                            exportCombinedExcel();
-                        }
-                    }, ],
+                    buttons: [],
                     columns: [{
                             data: null, // <-- important
                             name: 'no',
@@ -2260,8 +2300,8 @@
                             <span class="location-short">${shortText}</span>
                             ${data.length > 30 
                                 ? `<a href="javascript:void(0)" class="read-more text-blue-500 ml-2" 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            data-full="${encodeURIComponent(data)}"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            data-short="${encodeURIComponent(shortText)}">[+]</a>` 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    data-full="${encodeURIComponent(data)}"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    data-short="${encodeURIComponent(shortText)}">[+]</a>` 
                                 : "" }
                         `;
                             }
@@ -2279,8 +2319,8 @@
                             <span class="location-short">${shortText}</span>
                             ${data.length > 30 
                                 ? `<a href="javascript:void(0)" class="read-more text-blue-500 ml-2" 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            data-full="${encodeURIComponent(data)}"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            data-short="${encodeURIComponent(shortText)}">[+]</a>` 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    data-full="${encodeURIComponent(data)}"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    data-short="${encodeURIComponent(shortText)}">[+]</a>` 
                                 : "" }
                         `;
                             }
@@ -2790,6 +2830,260 @@
                 buildMonthlyBookingTableHead(selectedYear);
                 loadMonthlyAvailability(); // load once on page load
             });
+
+            // ===== PREVIEW EXPORT FUNCTIONALITY =====
+
+            function showExportPreview() {
+                document.getElementById('previewContent').innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p class="text-gray-600">Loading preview...</p>
+                    </div>
+                `;
+                document.getElementById('previewExportModal').classList.remove('hidden');
+
+                const year = $('#filterAvailabilityYear').val() || new Date().getFullYear();
+                const typeVal = $('#filterAvailabilityType').val();
+
+                // Fetch preview data using same parameters as export
+                fetch('{{ route('billboard.monthly.availability') }}' + '?year=' + year +
+                        '&type=' + typeVal +
+                        '&site_type=' + $('#filterAvailabilitySiteType').val() +
+                        '&state=' + $('#filterAvailabilityState').val() +
+                        '&district=' + $('#filterAvailabilityDistrict').val() +
+                        '&location=' + $('#filterAvailabilityLocation').val() +
+                        '&status=' + $('#filterAvailabilityStatus').val() +
+                        '&booked_only=' + ($('#filterBookedOnly').is(':checked') ? 1 : 0) +
+                        '&start_date=' + year + '-01-01' +
+                        '&end_date=' + year + '-12-31')
+                    .then(response => response.json())
+                    .then(data => {
+                        renderPreviewTable(data);
+                    })
+                    .catch(error => {
+                        document.getElementById('previewContent').innerHTML = `
+                        <div class="text-center py-12">
+                            <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            <p class="text-red-600 font-medium">Error loading preview</p>
+                            <p class="text-gray-600 text-sm mt-2">Please try again or contact support if the problem persists.</p>
+                        </div>
+                    `;
+                    });
+            }
+
+            function renderPreviewTable(data) {
+                if (!data.data || data.data.length === 0) {
+                    document.getElementById('previewContent').innerHTML = `
+                        <div class="text-center py-12">
+                            <p class="text-gray-600">No data available for the selected filters.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const previewRows = Math.min(data.data.length, 10); // Show first 10 rows
+
+                let html = `
+                    <div class="mb-4 text-sm text-gray-600">
+                        <p class="font-medium">Showing first <strong>${previewRows}</strong> of <strong>${data.data.length}</strong> records</p>
+                        <p class="mt-1">This is a preview of the monthly availability table that will be exported.</p>
+                    </div>
+                    <div class="border border-gray-300 rounded overflow-hidden">
+                        <div class="max-h-96 overflow-auto">
+                            <table class=" divide-y divide-gray-200 table-fixed text-xs">
+                                <thead class="bg-blue-600 text-white sticky top-0 z-10">
+                                    <tr>
+                `;
+
+                // Determine if this is a billboard type
+                const typeVal = ($('#filterAvailabilityType').val() || '').toLowerCase();
+                const isBillboard = typeVal === 'bb' || typeVal === 'billboard';
+
+                // Build header based on type
+                if (isBillboard) {
+                    html += `
+                        <th class="px-2 py-2 text-left text-sm font-bold border-r border-blue-700 w-8">No</th>
+                        <th class="px-2 py-2 text-left text-sm font-bold border-r border-blue-700 min-w-40">Site No</th>
+                        <th class="px-2 py-2 text-left text-sm font-bold border-r border-blue-700 w-24">Location</th>
+                        <th class="px-2 py-2 text-left text-sm font-bold border-r border-blue-700 w-24">New/Existing</th>
+                        <th class="px-2 py-2 text-left text-sm font-bold border-r border-blue-700 min-w-35">GPS</th>
+                        <th class="px-2 py-2 text-center text-sm font-bold border-r border-blue-700 w-16">Traffic</th>
+                        <th class="px-2 py-2 text-center text-sm font-bold border-r border-blue-700 w-12">Size</th>
+                    `;
+                } else {
+                    html += `
+                        <th class="px-2 py-2 text-left text-sm font-bold border-r border-blue-700 w-8">No</th>
+                        <th class="px-2 py-2 text-left text-sm font-bold border-r border-blue-700 w-24">Location</th>
+                        <th class="px-2 py-2 text-left text-sm font-bold border-r border-blue-700 min-w-30">Area</th>
+                        <th class="px-2 py-2 text-left text-sm font-bold border-r border-blue-700 w-16">New/Existing</th>
+                        <th class="px-2 py-2 text-left text-sm font-bold border-r border-blue-700 min-w-40">GPS</th>
+                        <th class="px-2 py-2 text-center text-sm font-bold border-r border-blue-700 w-12">Size</th>
+                    `;
+                }
+
+                // Add monthly headers
+                months.forEach(month => {
+                    html +=
+                        `<th class="px-3 py-2 text-center font-bold border-r border-blue-700 w-24 text-sm">${month}</th>`;
+                });
+
+                html += `
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                `;
+
+                // Add data rows (preview only)
+                data.data.slice(0, previewRows).forEach((row, rowIndex) => {
+                    html += '<tr class="hover:bg-gray-50">';
+
+                    // Map row properties to columns
+                    const rowNum = rowIndex + 1;
+                    const siteNo = row.site_number || '-';
+                    const location = row.location || '-';
+                    const area = row.area || '-';
+                    const siteType = row.site_type || '-';
+                    const gps = (row.gps_latitude && row.gps_longitude) ?
+                        `${parseFloat(row.gps_latitude).toFixed(4)}, ${parseFloat(row.gps_longitude).toFixed(4)}` :
+                        '-';
+                    const traffic = row.traffic_volume || '-';
+                    const size = row.size || '-';
+
+                    html +=
+                        `<td class="px-2 py-1.5 border-r border-gray-300 text-center text-sm">${rowNum}</td>`;
+
+                    if (isBillboard) {
+                        html += `<td class="px-2 py-1.5 border-r border-gray-300 text-sm">${siteNo}</td>`;
+                        html +=
+                            `<td class="px-2 py-1.5 border-r border-gray-300 truncate text-sm">${location}</td>`;
+                        html += `<td class="px-2 py-1.5 border-r border-gray-300 text-sm">${siteType}</td>`;
+                        html += `<td class="px-2 py-1.5 border-r border-gray-300 text-sm">${gps}</td>`;
+                        html +=
+                            `<td class="px-2 py-1.5 border-r border-gray-300 text-center text-sm">${traffic}</td>`;
+                        html +=
+                            `<td class="px-2 py-1.5 border-r border-gray-300 text-center text-sm">${size}</td>`;
+                    } else {
+                        html +=
+                            `<td class="px-2 py-1.5 border-r border-gray-300 truncate text-sm">${location}</td>`;
+                        html += `<td class="px-2 py-1.5 border-r border-gray-300 text-sm">${area}</td>`;
+                        html += `<td class="px-2 py-1.5 border-r border-gray-300 text-sm">${siteType}</td>`;
+                        html += `<td class="px-2 py-1.5 border-r border-gray-300 text-sm">${gps}</td>`;
+                        html +=
+                            `<td class="px-2 py-1.5 border-r border-gray-300 text-center text-sm">${size}</td>`;
+                    }
+
+                    // Add monthly columns from months array (respecting spans/merges)
+                    if (row.months && Array.isArray(row.months)) {
+                        // Build a map: position -> monthData to handle multiple bookings correctly
+                        const monthMap = {};
+                        let currentPos = 0;
+
+                        row.months.forEach(monthData => {
+                            if (monthData) {
+                                monthMap[currentPos] = monthData;
+                                const span = Math.max(1, parseInt(monthData.span) || 1);
+                                currentPos += span;
+                            }
+                        });
+
+                        // Render 12 months
+                        let monthIndex = 0;
+                        while (monthIndex < 12) {
+                            const monthData = monthMap[monthIndex];
+
+                            if (monthData) {
+                                const span = Math.max(1, parseInt(monthData.span) || 1);
+                                const safeSpan = Math.min(span, 12 - monthIndex);
+                                let cellContent = '';
+                                let cellClass = 'bg-gray-100';
+
+                                if (monthData.text) {
+                                    cellContent = String(monthData.text).substring(0, 80);
+                                    if (monthData.color) {
+                                        if (monthData.color.includes('bg-red')) cellClass =
+                                            'bg-red-200 text-red-900';
+                                        else if (monthData.color.includes('bg-blue')) cellClass =
+                                            'bg-blue-200 text-blue-900';
+                                        else if (monthData.color.includes('bg-green')) cellClass =
+                                            'bg-green-200 text-green-900';
+                                        else if (monthData.color.includes('bg-yellow')) cellClass =
+                                            'bg-yellow-100 text-yellow-900';
+                                        else if (monthData.color.includes('bg-gray-600')) cellClass =
+                                            'bg-gray-300 text-gray-900';
+                                    }
+                                }
+
+                                html +=
+                                    `<td colspan="${safeSpan}" class="px-2 py-1.5 border-r border-gray-300 text-center text-sm ${cellClass} whitespace-normal break-words min-w-30">${cellContent}</td>`;
+                                monthIndex += safeSpan;
+                            } else {
+                                // Empty month cell
+                                html +=
+                                    `<td class="px-2 py-1.5 border-r border-gray-300 text-center text-sm bg-gray-100 min-w-30"></td>`;
+                                monthIndex += 1;
+                            }
+                        }
+                    } else {
+                        for (let m = 0; m < 12; m++) {
+                            html +=
+                                `<td class="px-2 py-1.5 border-r border-gray-300 text-center text-sm bg-gray-100 min-w-30"></td>`;
+                        }
+                    }
+
+                    html += '</tr>';
+                });
+
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('previewContent').innerHTML = html;
+            }
+
+            function closePreviewModal() {
+                document.getElementById('previewExportModal').classList.add('hidden');
+            }
+
+            // Add click handler for preview button
+            $(document).on('click', '#previewExportBtn', function() {
+                showExportPreview();
+            });
+
+            // Export Excel button (top-level)
+            $(document).on('click', '#dataTableExportBtn', function() {
+                exportCombinedExcel();
+            });
+
+            // Close preview via close button (header)
+            $(document).on('click', '#closePreviewModalBtn', function() {
+                closePreviewModal();
+            });
+
+            // Close preview via close button (footer)
+            $(document).on('click', '#closePreviewModalFooterBtn', function() {
+                closePreviewModal();
+            });
+
+            // Download full report from preview
+            $(document).on('click', '#downloadFromPreviewBtn', function() {
+                exportCombinedExcel();
+            });
+
+            // Close preview when clicking on backdrop (outside modal content)
+            $(document).on('click', '#previewExportModal', function(e) {
+                if (e.target && e.target.id === 'previewExportModal') {
+                    closePreviewModal();
+                }
+            });
+
+            // ===== END PREVIEW EXPORT FUNCTIONALITY =====
 
 
 
