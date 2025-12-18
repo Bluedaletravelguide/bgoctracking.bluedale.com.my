@@ -472,6 +472,14 @@
                     Coordinator Calendar
                 </a>
 
+                <!-- show role | email -->
+                @csrf
+                <div
+                    class="btn-destructive inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2">
+                    <span class="text-sm font-medium">{{ Auth::user()->role }} | {{ Auth::user()->email }}</span>
+                </div>
+
+
                 <!-- Logout - Destructive (Always visible) -->
                 <form method="POST" action="{{ route('logout') }}" class="inline">
                     @csrf

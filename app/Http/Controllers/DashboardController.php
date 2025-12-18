@@ -107,9 +107,7 @@ class DashboardController extends Controller
 
         if ($request->filled('year')) {
             $masterFilesQuery->where(function ($q) use ($request) {
-                $q->whereYear('date', $request->year)
-                    ->orWhereYear('date_finish', $request->year)
-                    ->orWhereYear('created_at', $request->year);
+                $q->whereYear('created_at', $request->year);
             });
         }
 
