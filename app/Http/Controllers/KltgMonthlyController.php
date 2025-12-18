@@ -831,17 +831,23 @@ class KltgMonthlyController extends Controller
     private function buildKltgPayload(Request $request): array
     {
         $activeYear = (int)($request->get('year') ?: now()->year);
-        $month      = $request->get('month');     // "", "January", ...
-        $status     = $request->get('status', '');
-        $company    = $request->get('company', '');
-        $product    = $request->get('product', '');
+        $filterMonth = $request->get('filter_month', '');
+        $filterCompany = $request->get('filter_company', '');
+        $filterStatus = $request->get('filter_status', '');
+        $filterDateFrom = $request->get('filter_date_from', '');
+        $filterDateTo = $request->get('filter_date_to', '');
+        $filterSearch = $request->get('filter_search', '');
 
-        $rows       = $this->getKltgRows($activeYear, $company, $product);
-        $detailsMap = $this->getKltgDetailsMap($activeYear, $month, $status);
-
-        // Optional: apply "header table" filters (status/company/product) to rows if your UI does
-        if ($company) $rows = $rows->where('company', $company)->values();
-        if ($product) $rows = $rows->where('product', $product)->values();
+        $rows = $this->getKltgRows(
+            $activeYear,
+            $filterMonth,
+            $filterCompany,
+            $filterStatus,
+            $filterDateFrom,
+            $filterDateTo,
+            $filterSearch
+        );
+        $detailsMap = $this->getKltgDetailsMap($activeYear);
 
         return [
             'activeYear' => $activeYear,
@@ -858,23 +864,60 @@ class KltgMonthlyController extends Controller
     {
         $baseYear = (int)($req->input('year') ?: now('Asia/Kuala_Lumpur')->year);
 
-        // Remove 'color' from master_files query - it doesn't exist there
-        $masters = DB::table('master_files')
+        // Extract filter parameters
+        $filterMonth = $req->get('filter_month', '');
+        $filterCompany = $req->get('filter_company', '');
+        $filterDateFrom = $req->get('filter_date_from', '');
+        $filterDateTo = $req->get('filter_date_to', '');
+        $filterSearch = $req->get('filter_search', '');
+
+        $yearStart = Carbon::create($baseYear, 1, 1)->startOfDay();
+        $yearEnd   = Carbon::create($baseYear, 12, 31)->endOfDay();
+
+        // Build filtered masters query
+        $mastersQuery = MasterFile::query()
             ->whereRaw("UPPER(TRIM(COALESCE(product_category, ''))) = 'KLTG'")
-            ->get([
-                'id',
-                'month',
-                'date',
-                'date_finish',
-                'company',
-                'product',
-                'status',
-                'created_at'
-            ]);
+            ->whereNotNull('date')
+            ->whereNotNull('date_finish');
+
+        if ($filterMonth) {
+            $mastersQuery->where('month', $filterMonth);
+        }
+
+        if ($filterCompany) {
+            $mastersQuery->where('company', $filterCompany);
+        }
+
+        if ($filterSearch) {
+            $mastersQuery->where(function ($q) use ($filterSearch) {
+                $q->where('company', 'LIKE', "%{$filterSearch}%")
+                    ->orWhere('product', 'LIKE', "%{$filterSearch}%");
+            });
+        }
+
+        if ($filterDateFrom) {
+            $mastersQuery->whereDate('date', '>=', $filterDateFrom);
+        }
+
+        if ($filterDateTo) {
+            $mastersQuery->whereDate('date_finish', '<=', $filterDateTo);
+        }
+
+        $masters = $mastersQuery->get([
+            'id',
+            'month',
+            'date',
+            'date_finish',
+            'company',
+            'product',
+            'status',
+            'created_at'
+        ]);
 
         // Ambil semua details dengan color (color ada di tabel ini)
         $detailRows = DB::table('kltg_monthly_details')
             ->whereIn('master_file_id', $masters->pluck('id'))
+            ->where('year', $baseYear)
             ->get([
                 'id',
                 'master_file_id',
@@ -1018,12 +1061,281 @@ class KltgMonthlyController extends Controller
         }
 
         $export = new KltgMatrixExport([], $catLabels, $catKeys);
+        // Ensure filename is defined
+        $fileName = sprintf('KLTG_Monthly_Ongoing_Jobs_%s_%s.xlsx', $baseYear, Carbon::now()->format('d-M-Y'));
         return $export->downloadByYear($recordsByYear, $fileName);
     }
-    // ===== Helper stubs (mirror your index queries) =====
-    private function getKltgRows(int $year, string $company = '', string $product = '')
+
+    /**
+     * Return a small JSON preview of the KLTG export (headings + first rows)
+     */
+    public function exportPreview(Request $request)
     {
+        $baseYear = (int)($request->input('year') ?: now('Asia/Kuala_Lumpur')->year);
+
+        // Extract filter parameters
+        $filterMonth = $request->get('filter_month', '');
+        $filterCompany = $request->get('filter_company', '');
+        $filterDateFrom = $request->get('filter_date_from', '');
+        $filterDateTo = $request->get('filter_date_to', '');
+        $filterSearch = $request->get('filter_search', '');
+
+        $yearStart = Carbon::create($baseYear, 1, 1)->startOfDay();
+        $yearEnd   = Carbon::create($baseYear, 12, 31)->endOfDay();
+
+        // Step 1: Get master IDs that have details for this specific year
+        $idsWithYearContent = DB::table('kltg_monthly_details')
+            ->where('year', $baseYear)
+            ->whereBetween('month', [1, 12])
+            ->where(function ($q) {
+                $q->where(function ($q2) {
+                    $q2->whereIn('type', ['START', 'END', 'DATE'])
+                        ->whereNotNull('value_date');
+                })
+                    ->orWhere(function ($q2) {
+                        $q2->where('type', 'STATUS')
+                            ->where(function ($q3) {
+                                $q3->whereNotNull('value')->where('value', '!=', '')
+                                    ->orWhereNotNull('value_text')->where('value_text', '!=', '');
+                            });
+                    });
+            })
+            ->distinct()
+            ->pluck('master_file_id');
+
+        // Step 2: Build filtered masters query - only those with content in this year
+        $mastersQuery = MasterFile::query()
+            ->whereIn('id', $idsWithYearContent)
+            ->whereRaw("UPPER(TRIM(COALESCE(product_category, ''))) = 'KLTG'")
+            ->whereNotNull('date')
+            ->whereNotNull('date_finish')
+            ->whereDate('date', '<=', $yearEnd)
+            ->whereDate('date_finish', '>=', $yearStart);
+
+        if ($filterMonth) {
+            $mastersQuery->where('month', $filterMonth);
+        }
+
+        if ($filterCompany) {
+            $mastersQuery->where('company', $filterCompany);
+        }
+
+        if ($filterSearch) {
+            $mastersQuery->where(function ($q) use ($filterSearch) {
+                $q->where('company', 'LIKE', "%{$filterSearch}%")
+                    ->orWhere('product', 'LIKE', "%{$filterSearch}%");
+            });
+        }
+
+        if ($filterDateFrom) {
+            $mastersQuery->whereDate('date', '>=', $filterDateFrom);
+        }
+
+        if ($filterDateTo) {
+            $mastersQuery->whereDate('date_finish', '<=', $filterDateTo);
+        }
+
+        $masters = $mastersQuery->get([
+            'id',
+            'month',
+            'date',
+            'date_finish',
+            'company',
+            'product',
+            'status',
+            'created_at'
+        ]);
+
+        // Get details ONLY for this year from these filtered masters
+        $detailRows = DB::table('kltg_monthly_details')
+            ->whereIn('master_file_id', $masters->pluck('id'))
+            ->where('year', $baseYear)
+            ->get([
+                'id',
+                'master_file_id',
+                'year',
+                'month',
+                'category',
+                'type',
+                'field_type',
+                'value',
+                'value_text',
+                'value_date',
+                'status',
+                'color'
+            ]);
+
+        $total = $masters->count();
+
+        $catLabels = ['KLTG', 'Video', 'Article', 'LB', 'EM'];
+        $catKeys = ['KLTG', 'VIDEO', 'ARTICLE', 'LB', 'EM'];
+
+        // Fixed headers match KltgMatrixExport::writeHeader
+        $fixedHeaders = ['No', 'Month', 'Created At', 'Company', 'Product', 'Publication', 'Edition', 'Status', 'Start', 'End'];
+
+        // Flatten month x category headings
+        $monthNames = array_map(fn($m) => Carbon::create()->year($baseYear)->month($m)->format('F Y'), range(1, 12));
+        $monthCatHeadings = [];
+        foreach ($monthNames as $mn) {
+            foreach ($catLabels as $lab) {
+                $monthCatHeadings[] = sprintf('%s - %s', $mn, $lab);
+            }
+        }
+
+        $headings = array_merge($fixedHeaders, $monthCatHeadings);
+
+        // Build details map - keyed with year to ensure we use the right year's data
+        $detailsByMaster = $detailRows->groupBy('master_file_id');
+        $detailsMap = [];
+        foreach ($detailRows as $d) {
+            $k = "{$d->master_file_id}|{$d->year}|{$d->month}|{$d->category}|{$d->type}";
+            $detailsMap[$k] = $d;
+        }
+
+        $rows = [];
+        foreach ($masters->take(20)->values() as $index => $mf) {
+            // publication / edition - explicitly use $baseYear in key
+            $pubKey = "{$mf->id}|{$baseYear}|0|KLTG|PUBLICATION";
+            $editKey = "{$mf->id}|{$baseYear}|0|KLTG|EDITION";
+            $publication = isset($detailsMap[$pubKey]) ? ($detailsMap[$pubKey]->value_text ?? $detailsMap[$pubKey]->value ?? '') : '';
+            $edition = isset($detailsMap[$editKey]) ? ($detailsMap[$editKey]->value_text ?? $detailsMap[$editKey]->value ?? '') : '';
+
+            $statusRow = [];
+            $dateRow = [];
+
+            // Fixed columns for status row
+            $statusRow[] = $index + 1;
+            $statusRow[] = $mf->month ?? '';
+            $statusRow[] = $mf->created_at ? Carbon::parse($mf->created_at)->format('d/m/y') : '';
+            $statusRow[] = $mf->company ?? '';
+            $statusRow[] = $mf->product ?? '';
+            $statusRow[] = $publication;
+            $statusRow[] = $edition;
+            $statusRow[] = $mf->status ?? '';
+            $statusRow[] = $mf->date ? Carbon::parse($mf->date)->format('d/m/y') : '';
+            $statusRow[] = $mf->date_finish ? Carbon::parse($mf->date_finish)->format('d/m/y') : '';
+
+            // Second row: fixed columns empty
+            for ($i = 0; $i < count($fixedHeaders); $i++) $dateRow[] = '';
+
+            // Month x category columns - explicitly use $baseYear in key
+            for ($m = 1; $m <= 12; $m++) {
+                foreach ($catKeys as $k) {
+                    $statusKey = "{$mf->id}|{$baseYear}|{$m}|{$k}|STATUS";
+                    $startKey = "{$mf->id}|{$baseYear}|{$m}|{$k}|START";
+                    $dateKey = "{$mf->id}|{$baseYear}|{$m}|{$k}|DATE";
+                    $endKey = "{$mf->id}|{$baseYear}|{$m}|{$k}|END";
+
+                    $status = '';
+                    if (isset($detailsMap[$statusKey])) {
+                        $d = $detailsMap[$statusKey];
+                        $status = $d->value_text ?? $d->value ?? $d->status ?? '';
+                    }
+
+                    $start = '';
+                    if (isset($detailsMap[$startKey])) {
+                        $d = $detailsMap[$startKey];
+                        $start = $d->value_date ?? $d->value ?? '';
+                    } elseif (isset($detailsMap[$dateKey])) {
+                        $d = $detailsMap[$dateKey];
+                        $start = $d->value_date ?? $d->value ?? '';
+                    }
+                    $end = '';
+                    if (isset($detailsMap[$endKey])) {
+                        $d = $detailsMap[$endKey];
+                        $end = $d->value_date ?? $d->value ?? '';
+                    }
+
+                    $statusRow[] = $status;
+                    // date cell mirrors export: "dd/mm/yy" or "start – end"
+                    $dateStr = '';
+                    if ($start) $dateStr = Carbon::parse($start)->format('d/m/y');
+                    if ($end) $dateStr = trim($dateStr . ' – ' . Carbon::parse($end)->format('d/m/y'));
+                    $dateRow[] = $dateStr;
+                }
+            }
+
+            $rows[] = $statusRow;
+            $rows[] = $dateRow;
+        }
+
+        return response()->json([
+            'headings' => $headings,
+            'data' => $rows,
+            'total_records' => $total,
+        ]);
+    }
+    // ===== Helper stubs (mirror your index queries) =====
+    private function getKltgRows(
+        int $year,
+        string $filterMonth = '',
+        string $filterCompany = '',
+        string $filterStatus = '',
+        string $filterDateFrom = '',
+        string $filterDateTo = '',
+        string $filterSearch = ''
+    ) {
+        $yearStart = Carbon::create($year, 1, 1)->startOfDay();
+        $yearEnd   = Carbon::create($year, 12, 31)->endOfDay();
+
+        // Get master IDs with content or overlap
+        $idsWithContent = DB::table('kltg_monthly_details')
+            ->where('year', $year)
+            ->whereBetween('month', [1, 12])
+            ->where(function ($q) {
+                $q->where(function ($q2) {
+                    $q2->whereIn('type', ['START', 'END', 'DATE'])
+                        ->whereNotNull('value_date');
+                })
+                    ->orWhere(function ($q2) {
+                        $q2->where('type', 'STATUS')
+                            ->where(function ($q3) {
+                                $q3->whereNotNull('value')->where('value', '!=', '')
+                                    ->orWhereNotNull('value_text')->where('value_text', '!=', '');
+                            });
+                    });
+            })
+            ->distinct()
+            ->pluck('master_file_id');
+
         $query = MasterFile::query()
+            ->whereRaw("UPPER(TRIM(COALESCE(product_category, ''))) = 'KLTG'")
+            ->whereNotNull('date')
+            ->whereNotNull('date_finish')
+            ->whereDate('date', '<=', $yearEnd)
+            ->whereDate('date_finish', '>=', $yearStart);
+
+        if ($filterMonth) {
+            $query->where('month', $filterMonth);
+        }
+
+        if ($filterCompany) {
+            $query->where('company', $filterCompany);
+        }
+
+        if ($filterSearch) {
+            $query->where(function ($q) use ($filterSearch) {
+                $q->where('company', 'LIKE', "%{$filterSearch}%")
+                    ->orWhere('product', 'LIKE', "%{$filterSearch}%");
+            });
+        }
+
+        if ($filterDateFrom) {
+            $query->whereDate('date', '>=', $filterDateFrom);
+        }
+
+        if ($filterDateTo) {
+            $query->whereDate('date_finish', '<=', $filterDateTo);
+        }
+
+        $idsByOverlap = $query->pluck('id');
+        $masterIds = $idsWithContent->merge($idsByOverlap)->unique()->values();
+
+        if ($masterIds->isEmpty()) {
+            return collect();
+        }
+
+        $rows = MasterFile::query()
             ->select([
                 'id',
                 'company',
@@ -1035,19 +1347,48 @@ class KltgMonthlyController extends Controller
                 DB::raw('CASE WHEN date IS NOT NULL AND date_finish IS NOT NULL
                           THEN DATEDIFF(date_finish, date) + 1 ELSE 0 END as duration_days'),
                 'created_at',
+                'status'
             ])
-            ->where('product_category', 'KLTG')
-            ->when($company, fn($q) => $q->where('company', $company))
-            ->when($product, fn($q) => $q->where('product', $product))
-            ->latest('created_at')
-            ->orderByDesc('id');
+            ->whereIn('id', $masterIds)
+            ->whereRaw("UPPER(TRIM(COALESCE(product_category, ''))) = 'KLTG'");
 
-        return $query->get();
+        // Apply same filters
+        if ($filterMonth) {
+            $rows->where('month', $filterMonth);
+        }
+
+        if ($filterCompany) {
+            $rows->where('company', $filterCompany);
+        }
+
+        if ($filterSearch) {
+            $rows->where(function ($q) use ($filterSearch) {
+                $q->where('company', 'LIKE', "%{$filterSearch}%")
+                    ->orWhere('product', 'LIKE', "%{$filterSearch}%");
+            });
+        }
+
+        if ($filterDateFrom) {
+            $rows->whereDate('date', '>=', $filterDateFrom);
+        }
+
+        if ($filterDateTo) {
+            $rows->whereDate('date_finish', '<=', $filterDateTo);
+        }
+
+        return $rows->latest('created_at')->orderByDesc('id')->get();
     }
 
-    private function getKltgDetailsMap(int $year, ?string $monthFilter = '', string $statusFilter = '')
+    private function getKltgDetailsMap(int $year, ?string $monthFilter = '', string $statusFilter = '', ?array $masterIds = null)
     {
-        $details = KltgMonthlyDetail::where('year', $year)->get();
+        $query = KltgMonthlyDetail::where('year', $year);
+
+        // If specific master IDs provided, only get details for those
+        if ($masterIds !== null && !empty($masterIds)) {
+            $query->whereIn('master_file_id', $masterIds);
+        }
+
+        $details = $query->get();
 
         $map = [];
         foreach ($details as $d) {

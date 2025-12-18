@@ -20,7 +20,7 @@
                     <!-- Title Section -->
                     <div>
                         <h1 class="font-serif text-2xl ink font-semibold tracking-tight">
-                            MONTHLY Ongoing Job – KL The Guide
+                            MONTHLY Ongoing Job – KL The Guide — {{ request('year', now('Asia/Kuala_Lumpur')->year) }}
                         </h1>
                         <p class="text-sm text-neutral-600 mt-1">Inline updates enabled</p>
                     </div>
@@ -47,16 +47,12 @@
                             array_filter(
                                 request()->only([
                                     'year',
-                                    'filter_year',
-                                    'month',
                                     'filter_month',
-                                    'q',
-                                    'search',
-                                    'status',
-                                    'start',
-                                    'end',
-                                    'date_from',
-                                    'date_to',
+                                    'filter_company',
+                                    'filter_status',
+                                    'filter_date_from',
+                                    'filter_date_to',
+                                    'filter_search',
                                 ]),
                             ),
                         ) }}"
@@ -67,6 +63,22 @@
                             </svg>
                             Export Excel
                         </a>
+                        </a>
+
+                        <!-- Preview Export Button -->
+                        @can('export.run')
+                            <button type="button" onclick="showExportPreview()"
+                                class="btn-ghost inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                                    </path>
+                                </svg>
+                                Preview Export
+                            </button>
+                        @endcan
 
                         <a href="{{ route('coordinator.kltg.index') }}" class="btn-secondary">
                             Open KLTG Coordinator
@@ -74,6 +86,46 @@
 
                         <a href="{{ route('dashboard') }}" class="btn-ghost">
                             Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Modal -->
+        <div id="preview-modal" class="fixed inset-0 z-50 hidden">
+            <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+            <div class="fixed inset-0 flex items-center justify-center p-4">
+                <div
+                    class="bg-white rounded-lg w-full max-w-4xl max-h-[70vh] overflow-hidden shadow-xl flex flex-col z-50">
+                    <div class="flex items-center justify-between p-4 border-b">
+                        <h3 class="text-lg font-semibold text-gray-900">Export Preview</h3>
+                        <button onclick="closePreviewModal()" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="p-4 flex-grow overflow-y-auto">
+                        <div id="preview-content" class="text-sm">
+                            <div class="text-center py-8">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4">
+                                </div>
+                                <p class="text-gray-600">Loading preview...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end p-4 border-t bg-gray-50">
+                        <button onclick="closePreviewModal()"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 mr-2">
+                            Close
+                        </button>
+                        <a id="export-link" href="{{ route('kltg.exportMatrix', request()->query()) }}"
+                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                            Go to Export
                         </a>
                     </div>
                 </div>
@@ -91,7 +143,7 @@
                             <p class="text-sm text-neutral-600 mt-1">Refine your view with precision</p>
                         </div>
                         <button id="clear-filters"
-                            class="btn-ghost text-sm flex items-center gap-1 hover:text-red-600 transition-colors">
+                            class="btn-ghost text-lg flex items-center gap-1 hover:text-red-600 transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M6 18L18 6M6 6l12 12" />
@@ -104,14 +156,14 @@
                         <!-- Month Filter -->
                         <div class="space-y-2">
                             <label for="filter-month"
-                                class="header-label text-sm font-medium text-gray-700 block">Month</label>
+                                class="header-label text-lg font-medium text-gray-700 block">Month</label>
                             @php $mSel = (string)request('filter_month', ''); @endphp
                             <select id="filter-month"
                                 class="form-input w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                                 <option value="" {{ $mSel === '' ? 'selected' : '' }}>All Months</option>
                                 @foreach (['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $m)
                                     <option value="{{ $m }}" {{ $mSel === $m ? 'selected' : '' }}>
-                                        {{ substr($m, 0, 3) }}
+                                        {{ $m }}
                                     </option>
                                 @endforeach
                             </select>
@@ -120,7 +172,7 @@
                         <!-- Company Filter -->
                         <div class="space-y-2">
                             <label for="filter-company"
-                                class="header-label text-sm font-medium text-gray-700 block">Company</label>
+                                class="header-label text-lg font-medium text-gray-700 block">Company</label>
                             @php $cSel = (string)request('filter_company', ''); @endphp
                             <select id="filter-company"
                                 class="form-input w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
@@ -139,7 +191,7 @@
                         <!-- Status Filter -->
                         <div class="space-y-2">
                             <label for="filter-status"
-                                class="header-label text-sm font-medium text-gray-700 block">Status</label>
+                                class="header-label text-lg font-medium text-gray-700 block">Status</label>
                             @php $sSel = (string)request('filter_status', ''); @endphp
                             <select id="filter-status"
                                 class="form-input w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
@@ -156,7 +208,7 @@
                         <!-- Date Range Filter -->
                         <div class="space-y-2">
                             <label for="filter-date-from"
-                                class="header-label text-sm font-medium text-gray-700 block">Date From</label>
+                                class="header-label text-lg font-medium text-gray-700 block">Date From</label>
                             <input type="date" id="filter-date-from"
                                 class="form-input w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                 value="{{ request('filter_date_from', '') }}">
@@ -164,7 +216,7 @@
 
                         <div class="space-y-2">
                             <label for="filter-date-to"
-                                class="header-label text-sm font-medium text-gray-700 block">Date To</label>
+                                class="header-label text-lg font-medium text-gray-700 block">Date To</label>
                             <input type="date" id="filter-date-to"
                                 class="form-input w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                 value="{{ request('filter_date_to', '') }}">
@@ -173,40 +225,31 @@
                         <!-- Search Filter -->
                         <div class="space-y-2">
                             <label for="filter-search"
-                                class="header-label text-sm font-medium text-gray-700 block">Search</label>
+                                class="header-label text-lg font-medium text-gray-700 block">Search</label>
                             <input type="text" id="filter-search"
                                 class="form-input w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                 placeholder="Search..." value="{{ request('filter_search', '') }}">
                         </div>
                     </div>
 
-                    <!-- Year Switcher & Apply Button -->
-                    <div class="mt-6 pt-4 border-t border-neutral-100">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div class="flex items-center gap-3">
-                                <label for="active-year" class="text-sm text-neutral-600 font-medium">Select
-                                    Year</label>
-                                <select id="active-year"
-                                    class="form-input border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                                    @php
-                                        $yNow = now('Asia/Kuala_Lumpur')->year;
-                                        $years = range($yNow - 2, $yNow + 3);
-                                        $activeYear = isset($activeYear)
-                                            ? (int) $activeYear
-                                            : (int) request('year', $yNow);
-                                    @endphp
-                                    @foreach ($years as $y)
-                                        <option value="{{ $y }}"
-                                            {{ $activeYear === (int) $y ? 'selected' : '' }}>{{ $y }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <button id="apply-filters"
-                                class="btn-primary px-6 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm">
-                                Apply Filters
-                            </button>
+                    <!-- Year Switcher -->
+                    <div class="mt-6 pt-4 w-32">
+                        <div class="space-y-2">
+                            <label for="active-year"
+                                class="header-label text-lg font-medium text-gray-700 block">Year</label>
+                            <select id="active-year"
+                                class="form-input border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                @php
+                                    $yNow = now('Asia/Kuala_Lumpur')->year;
+                                    $years = range($yNow - 2, $yNow + 3);
+                                    $activeYear = isset($activeYear) ? (int) $activeYear : (int) request('year', $yNow);
+                                @endphp
+                                @foreach ($years as $y)
+                                    <option value="{{ $y }}"
+                                        {{ $activeYear === (int) $y ? 'selected' : '' }}>{{ $y }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -216,12 +259,18 @@
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const clearBtn = document.getElementById('clear-filters');
-                const applyBtn = document.getElementById('apply-filters');
                 const yearSelect = document.getElementById('active-year');
+
+                // Auto-apply for all filter inputs
+                const monthFilter = document.getElementById('filter-month');
+                const companyFilter = document.getElementById('filter-company');
+                const statusFilter = document.getElementById('filter-status');
+                const dateFromInput = document.getElementById('filter-date-from');
+                const dateToInput = document.getElementById('filter-date-to');
+                const searchInput = document.getElementById('filter-search');
 
                 // Debounce function for search input
                 let searchTimeout;
-                const searchInput = document.getElementById('filter-search');
                 if (searchInput) {
                     searchInput.addEventListener('input', function() {
                         clearTimeout(searchTimeout);
@@ -231,31 +280,31 @@
                     });
                 }
 
-                // Add auto-apply for date range inputs
-                const dateFromInput = document.getElementById('filter-date-from');
-                const dateToInput = document.getElementById('filter-date-to');
+                // Immediate apply for select and date inputs
+                if (monthFilter) {
+                    monthFilter.addEventListener('change', applyFilters);
+                }
+
+                if (companyFilter) {
+                    companyFilter.addEventListener('change', applyFilters);
+                }
+
+                if (statusFilter) {
+                    statusFilter.addEventListener('change', applyFilters);
+                }
 
                 if (dateFromInput) {
-                    dateFromInput.addEventListener('change', function() {
-                        applyFilters();
-                    });
+                    dateFromInput.addEventListener('change', applyFilters);
                 }
 
                 if (dateToInput) {
-                    dateToInput.addEventListener('change', function() {
-                        applyFilters();
-                    });
+                    dateToInput.addEventListener('change', applyFilters);
                 }
 
                 // Auto-apply for year selection
                 if (yearSelect) {
-                    yearSelect.addEventListener('change', function() {
-                        applyFilters();
-                    });
+                    yearSelect.addEventListener('change', applyFilters);
                 }
-
-                // Apply filters button functionality
-                applyBtn?.addEventListener('click', applyFilters);
 
                 // Clear all filters
                 clearBtn?.addEventListener('click', function() {
@@ -335,46 +384,51 @@
         <div class="bg-white rounded-2xl border border-black shadow-sm overflow-hidden">
             <!-- Table Container -->
             <div class="overflow-x-auto" style="max-height: 75vh;">
-                <table class="min-w-[5500px] w-full text-sm border-collapse border border-black">
+                <table class="min-w-[5500px] w-full text-lg border-collapse border border-black">
                     <!-- Sticky Header (atas saja) -->
                     <thead class="sticky top-0 z-20 bg-blue-600">
                         <tr class="bg-neutral-50/80">
                             <th
-                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base ink">
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-lg ink">
                                 No</th>
                             <th
-                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base ink">
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-lg ink">
                                 Created At</th>
                             <th
-                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base ink">
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-lg ink">
                                 Month</th>
                             <th
-                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-left sticky left-0 z-30 bg-blue-200 min-w-[220px] font-bold text-base ink">
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-left sticky left-0 z-30 bg-blue-200 min-w-[220px] font-bold text-lg ink">
                                 Company
                             </th>
                             <th
-                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base min-w-32 ink">
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-lg min-w-32 ink">
                                 Product</th>
                             <th
-                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base min-w-32 ink">
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-lg min-w-32 ink">
                                 Publication</th>
                             <th
-                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base min-w-32 ink">
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-lg min-w-32 ink">
                                 Edition</th>
                             <th
-                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base ink">
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-lg ink">
                                 Status</th>
                             <th
-                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base ink">
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-lg ink">
                                 Start</th>
                             <th
-                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-base ink">
+                                class="border border-black px-4 py-3 header-label whitespace-nowrap text-center font-bold text-lg ink">
                                 End</th>
 
+                            @php
+                                $displayYear = isset($activeYear)
+                                    ? (int) $activeYear
+                                    : (int) request('year', now('Asia/Kuala_Lumpur')->year);
+                            @endphp
                             @for ($m = 1; $m <= 12; $m++)
                                 <th
-                                    class="border border-black px-4 py-3 text-center bg-blue-200 header-label min-w-[900px] ink font-bold text-base">
-                                    {{ \Carbon\Carbon::create()->startOfYear()->month($m)->format('F') }}
+                                    class="border border-black px-4 py-3 text-center bg-blue-200 header-label min-w-[900px] ink font-bold text-lg">
+                                    {{ \Carbon\Carbon::create()->year($displayYear)->month($m)->format('F Y') }}
                                 </th>
                             @endfor
                         </tr>
@@ -1140,6 +1194,141 @@
                 }
             });
         });
+
+        // Export Preview functions (copied from dashboard view)
+        function showExportPreview() {
+            const content = document.getElementById('preview-content');
+            content.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p class="text-gray-600">Loading preview...</p>
+                </div>
+            `;
+            document.getElementById('preview-modal').classList.remove('hidden');
+
+            // Build query parameters from current form state
+            const params = new URLSearchParams();
+
+            // Get current filter values from form
+            const year = document.getElementById('active-year')?.value || '{{ now('Asia/Kuala_Lumpur')->year }}';
+            const month = document.getElementById('filter-month')?.value;
+            const company = document.getElementById('filter-company')?.value;
+            const status = document.getElementById('filter-status')?.value;
+            const dateFrom = document.getElementById('filter-date-from')?.value;
+            const dateTo = document.getElementById('filter-date-to')?.value;
+            const search = document.getElementById('filter-search')?.value;
+
+            if (year) params.set('year', year);
+            if (month) params.set('filter_month', month);
+            if (company) params.set('filter_company', company);
+            if (status) params.set('filter_status', status);
+            if (dateFrom) params.set('filter_date_from', dateFrom);
+            if (dateTo) params.set('filter_date_to', dateTo);
+            if (search) params.set('filter_search', search);
+
+            fetch('{{ route('kltg.exportPreview') }}?' + params.toString())
+                .then(response => response.json())
+                .then(data => {
+                    renderPreviewTable(data);
+                })
+                .catch(error => {
+                    document.getElementById('preview-content').innerHTML = `
+                        <div class="text-center py-8">
+                            <svg class="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            <p class="text-red-600">Error loading preview</p>
+                        </div>
+                    `;
+                });
+        }
+
+        function renderPreviewTable(data) {
+            let html = `
+                <div class="mb-4 text-sm text-gray-600">
+                    Showing first ${Math.ceil(data.data.length / 2)} records of ${data.total_records} total records (2 rows per record)
+                </div>
+                <div class="border border-gray-300 rounded overflow-hidden">
+                    <div class="max-h-72 overflow-y-auto">
+                        <div class="overflow-x-auto px-1">
+                            <table class="min-w-full table-auto text-xs">
+                                <thead class="bg-blue-600 text-white thead-sticky">`;
+
+            // Fixed header columns
+            const fixedHeaders = ['No', 'Month', 'Created At', 'Company', 'Product', 'Publication', 'Edition', 'Status',
+                'Start', 'End'
+            ];
+            const numFixed = fixedHeaders.length;
+            const numCats = 5; // KLTG, Video, Article, LB, EM
+            const numMonths = 12;
+            const numMonthCols = numMonths * numCats;
+
+            // Row 1: Fixed headers + merged month headers
+            html += '<tr>';
+            fixedHeaders.forEach((h, i) => {
+                html +=
+                    `<th class="px-2 py-1.5 text-left font-bold uppercase text-white border-b border-r border-blue-700 whitespace-nowrap" rowspan="2">${h}</th>`;
+            });
+
+            // Month merged headers
+            const monthNames = [];
+            for (let m = 1; m <= 12; m++) {
+                const date = new Date(new Date().getFullYear(), m - 1);
+                const monthYear = new Intl.DateTimeFormat('en-US', {
+                    month: 'short',
+                    year: 'numeric'
+                }).format(date);
+                monthNames.push(monthYear);
+                html +=
+                    `<th class="px-2 py-1.5 text-center font-bold text-white border-b border-r border-blue-700 whitespace-nowrap" colspan="${numCats}">${monthYear}</th>`;
+            }
+            html += '</tr>';
+
+            // Row 2: Category labels (repeated under each month)
+            html += '<tr>';
+            for (let m = 0; m < numMonths; m++) {
+                const cats = ['KLTG', 'Video', 'Article', 'LB', 'EM'];
+                cats.forEach(cat => {
+                    html +=
+                        `<th class="px-2 py-1.5 text-center font-bold text-white border-b border-r border-blue-700 whitespace-nowrap">${cat}</th>`;
+                });
+            }
+            html += '</tr>';
+
+            html += `</thead><tbody class="bg-white divide-y divide-gray-200">`;
+
+            // Data rows (pairs of status/date rows)
+            for (let i = 0; i < data.data.length; i += 2) {
+                const statusRow = data.data[i];
+                const dateRow = data.data[i + 1];
+
+                // Status row
+                html += '<tr class="hover:bg-gray-50">';
+                statusRow.forEach((cell, idx) => {
+                    html +=
+                        `<td class="px-2 py-1.5 text-sm text-gray-900 border-b border-r border-gray-300 whitespace-nowrap">${cell || ''}</td>`;
+                });
+                html += '</tr>';
+
+                // Date row
+                html += '<tr class="hover:bg-gray-50">';
+                dateRow.forEach((cell, idx) => {
+                    html +=
+                        `<td class="px-2 py-1.5 text-sm text-gray-900 border-b border-r border-gray-300 whitespace-nowrap text-gray-600">${cell || ''}</td>`;
+                });
+                html += '</tr>';
+            }
+
+            html += `</tbody></table></div></div></div>`;
+
+            document.getElementById('preview-content').innerHTML = html;
+            document.getElementById('export-link').href = '{{ route('kltg.exportMatrix', request()->query()) }}';
+        }
+
+        function closePreviewModal() {
+            document.getElementById('preview-modal').classList.add('hidden');
+        }
     </script>
 
 </x-app-shell>

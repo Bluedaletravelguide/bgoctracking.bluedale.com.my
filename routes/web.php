@@ -504,6 +504,10 @@ Route::prefix('kltg')->middleware(['auth', 'permission:coordinator.view'])->name
         ->middleware('permission:export.run')
         ->name('exportMatrix');
 
+    Route::get('/preview-xlsx', [KltgMonthlyController::class, 'exportPreview'])
+        ->middleware('permission:export.run')
+        ->name('exportPreview');
+
     Route::get('/export/print', [KltgMonthlyController::class, 'exportPrint'])
         ->middleware('permission:export.run')
         ->name('export.print');
