@@ -692,6 +692,13 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/calendar/coordinators/events', [CoordinatorCalendarController::class, 'events'])
         ->name('calendar.coordinators.events');
+
+    // Page for Monthly Ongoing Jobs calendar
+    Route::get('/calendar/coordinators/monthlyongoingjobs/page', [CoordinatorCalendarController::class, 'monthlyIndex'])
+        ->name('calendar.coordinators.monthlyongoingjobs.page');
+
+    Route::get('/calendar/coordinators/monthlyongoingjobs', [CoordinatorCalendarController::class, 'monthlyOngoingJobs'])
+        ->name('calendar.coordinators.monthlyongoingjobs');
 });
 
 // ===============================================

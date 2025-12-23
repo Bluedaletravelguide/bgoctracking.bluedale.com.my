@@ -472,6 +472,11 @@
                     Coordinator Calendar
                 </a>
 
+                <a href="{{ route('calendar.coordinators.monthlyongoingjobs.page') }}"
+                    class="inline-flex items-center px-3 py-2 rounded-full text-white" style="background:#22255b">
+                    Monthly Ongoing Jobs
+                </a>
+
                 <!-- show role | email -->
                 @csrf
                 <div

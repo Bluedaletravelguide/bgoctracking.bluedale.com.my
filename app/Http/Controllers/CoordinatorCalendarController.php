@@ -63,6 +63,12 @@ class CoordinatorCalendarController extends Controller
         return view('calendar.coordinators');
     }
 
+    /** Page: Monthly Ongoing Jobs calendar */
+    public function monthlyIndex(Request $request)
+    {
+        return view('calendar.monthlyongoingjobs');
+    }
+
     public function events(Request $request)
     {
         try {
@@ -103,6 +109,59 @@ class CoordinatorCalendarController extends Controller
             }
             if ($module === '' || $module === 'outdoor') {
                 $events = array_merge($events, $this->fetchOutdoorEvents(
+                    $start,
+                    $end,
+                    $year,
+                    $month,
+                    $companyQ,
+                    $milestone
+                ));
+            }
+
+            return response()->json($events);
+        } catch (\Throwable $e) {
+            // Return helpful payload instead of a silent 500
+            return response()->json([
+                'error' => 'Failed to load coordinator events',
+                'message' => $e->getMessage(),
+                'type' => class_basename($e),
+                'line' => $e->getLine(),
+            ], 500);
+        }
+    }
+
+    public function monthlyOngoingJobs(Request $request)
+    {
+        try {
+            // FullCalendar passes ISO timestamps. Convert to DATE strings.
+            $startRaw = $request->query('start');
+            $endRaw   = $request->query('end');
+
+            $start = $this->toDateString($startRaw); // 'YYYY-MM-DD' or null
+            $end   = $this->toDateString($endRaw);
+
+            $module    = strtolower((string)$request->query('module', '')); // '', 'outdoor','media','kltg'
+            $year      = trim((string)$request->query('year', ''));
+            $month     = trim((string)$request->query('month', '')); // 1..12
+            $companyQ  = trim((string)$request->query('company', ''));
+            $milestone = trim((string)$request->query('milestone', ''));
+
+            $events = [];
+
+            // Monthly ongoing jobs are sourced from the monthly details tables
+            if ($module === '' || $module === 'kltg') {
+                $events = array_merge($events, $this->fetchKltgMonthlyOngoingJobs(
+                    $start,
+                    $end,
+                    $year,
+                    $month,
+                    $companyQ,
+                    $milestone
+                ));
+            }
+
+            if ($module === '' || $module === 'outdoor') {
+                $events = array_merge($events, $this->fetchOutdoorMonthlyOngoingJobs(
                     $start,
                     $end,
                     $year,
@@ -268,7 +327,7 @@ class CoordinatorCalendarController extends Controller
         return $events;
     }
 
-    /** KLTG */
+    /** KLTG Coordinator List */
     private function fetchKltgEvents($start, $end, $year, $month, $companyQ, $milestone)
     {
         $tbl = 'kltg_coordinator_lists';
@@ -288,7 +347,7 @@ class CoordinatorCalendarController extends Controller
         }
 
         // Use all real DATE/DATETIME/TIMESTAMP columns from KLTG table
-        $dateCols = $this->dateColumns($tbl, ['created_at', 'updated_at', 'masterfile_created_at']);
+        $dateCols = $this->dateColumns($tbl, ['created_at', 'updated_at', 'value_date']);
 
         // Restrict by calendar visible range if provided
         $q->when($start && $end, function ($qq) use ($dateCols, $start, $end) {
@@ -342,7 +401,7 @@ class CoordinatorCalendarController extends Controller
     }
 
 
-    /** OUTDOOR */
+    /** OUTDOOR Coordinator List */
     private function fetchOutdoorEvents($start, $end, $year, $month, $companyQ, $milestone)
     {
         $tbl = 'outdoor_coordinator_trackings';
@@ -361,8 +420,11 @@ class CoordinatorCalendarController extends Controller
             });
         }
 
-        $dateCols = $this->dateColumns('outdoor_coordinator_trackings', ['created_at', 'updated_at']);
-        Log::info("outdoor_coordinator_trackings date columns used", $dateCols);
+        // Use real DATE/DATETIME/TIMESTAMP columns from the coordinator table
+        $dateCols = $this->dateColumns($tbl, ['created_at', 'updated_at']);
+        Log::info("{$tbl} date columns used", $dateCols);
+
+        // Restrict to rows that have at least one date in range if start/end supplied
         $q->when($start && $end, function ($qq) use ($dateCols, $start, $end) {
             $qq->where(function ($or) use ($dateCols, $start, $end) {
                 foreach ($dateCols as $col) {
@@ -399,6 +461,182 @@ class CoordinatorCalendarController extends Controller
                         'company'       => $company,
                         'objective_raw' => $objective,
                         'title_raw'     => $title,
+                        'master_file_id' => (int)$row->master_file_id,
+                        'year'          => $row->year,
+                        'month'         => $row->month,
+                        'row_id'        => (int)$row->id,
+                    ],
+                ];
+            }
+        }
+
+        return $events;
+    }
+
+    /** KLTG Monthly Ongoing Jobs */
+    private function fetchKltgMonthlyOngoingJobs($start, $end, $year, $month, $companyQ, $milestone)
+    {
+        $tbl = 'kltg_monthly_details';
+
+        $q = DB::table($tbl . ' as k')
+            ->leftJoin('master_files as mf', 'mf.id', '=', 'k.master_file_id')
+            ->select('k.*', 'mf.company as mf_company', 'mf.product as mf_product')
+            ->when($year !== '', fn($qq) => $qq->where('k.year', (int)$year))
+            ->when($month !== '', fn($qq) => $qq->where('k.month', (int)$month));
+
+        if ($companyQ !== '') {
+            $like = '%' . $this->escapeLike($companyQ) . '%';
+            $q->where(function ($w) use ($like) {
+                $w->orWhere('k.client', 'like', $like)
+                    ->orWhere('mf.company', 'like', $like);
+            });
+        }
+
+        // Get ALL rows (both text and date) first
+        $allRows = $q->limit(5000)->get();
+
+        // Build lookup maps for both text and date rows
+        $textMap = [];
+        $dateMap = [];
+
+        foreach ($allRows as $r) {
+            $key = $r->master_file_id . '|' . $r->year . '|' . $r->month . '|' . $r->category;
+
+            if ($r->field_type === 'text') {
+                $textMap[$key] = $r;
+            } elseif ($r->field_type === 'date') {
+                $dateMap[$key] = $r;
+            }
+        }
+
+        // Find matched pairs
+        $matchedPairs = [];
+        foreach ($dateMap as $key => $dateRow) {
+            if (isset($textMap[$key])) {
+                $matchedPairs[] = [
+                    'text' => $textMap[$key],
+                    'date' => $dateRow
+                ];
+            }
+        }
+
+        $events = [];
+        foreach ($matchedPairs as $pair) {
+            $textRow = $pair['text'];
+            $dateRow = $pair['date'];
+
+            $val = $dateRow->value; // Assuming date is stored in 'value' column for date type
+            if (!$val) continue;
+
+            if ($start && $end && !(strtotime($val) >= strtotime($start) && strtotime($val) <= strtotime($end))) {
+                continue;
+            }
+
+            $formattedDate = date('d/m/Y', strtotime($val));
+            $combinedValue = "{$textRow->value} ({$formattedDate})";
+
+            // Title / Company / Objective
+            $title     = $this->pickFirst([$dateRow->product ?? null, $dateRow->site ?? null, $dateRow->mf_product ?? null], 'KLTG');
+            $company   = $this->pickFirst([$dateRow->client ?? null, $dateRow->mf_company ?? null], '—');
+            $objective = $this->pickFirst([$dateRow->status ?? null, $dateRow->next_follow_up_note ?? null], 'KLTG');
+
+            $events[] = [
+                'id'    => "kltg:{$dateRow->id}",
+                'title' => "{$title} – {$company} – {$this->humanize($objective)}",
+                'start' => $val,
+                'color' => self::COLORS['kltg'],
+                'allDay' => true,
+                'extendedProps' => [
+                    'module'         => 'kltg',
+                    'table'          => $tbl,
+                    'milestone'      => $this->milestoneLabel('value') . $this->getStatusForColumn($dateRow, 'value'),
+                    'company'        => $company,
+                    'field_key'      => $dateRow->field_key ?? null,
+                    'field_type'     => $dateRow->field_type,
+                    'value_date'     => $dateRow->value ?? null,
+                    'value'          => $dateRow->value ?? null,
+                    'combined_value' => $combinedValue,
+                    'status'         => $dateRow->status ?? null,
+                    'type'           => $dateRow->type ?? null,
+                    'title_raw'      => $title,
+                    'category'       => $dateRow->category ?? null,
+                    'master_file_id' => (int) $dateRow->master_file_id,
+                    'year'           => $dateRow->year,
+                    'month'          => $dateRow->month,
+                    'row_id'         => (int) $dateRow->id,
+                    'site'           => $dateRow->site ?? null,
+                ],
+            ];
+        }
+
+        return $events;
+    }
+
+
+    /** OUTDOOR Monthly Ongoing Jobs */
+    private function fetchOutdoorMonthlyOngoingJobs($start, $end, $year, $month, $companyQ, $milestone)
+    {
+        $tbl = 'outdoor_monthly_details';
+
+        // Join to master_files to get company & product
+        $q = DB::table($tbl . ' as o')
+            ->join('master_files as mf', 'mf.id', '=', 'o.master_file_id')
+            ->select('o.*', 'mf.company as mf_company', 'mf.product as mf_product')
+            ->when($year !== '', fn($qq) => $qq->where('o.year', (int)$year))
+            ->when($month !== '', fn($qq) => $qq->where('o.month', (int)$month));
+
+        if ($companyQ !== '') {
+            $like = '%' . $this->escapeLike($companyQ) . '%';
+            $q->where(function ($w) use ($like) {
+                $w->where('mf.company', 'like', $like);
+            });
+        }
+
+        // Monthly details store individual fields per row. Use `value_date` rows only.
+        $dateCols = ['value_date'];
+
+        // Only include rows that represent dates (or have a value_date present)
+        $q->where(function ($qq) {
+            $qq->where('o.field_type', 'date')
+                ->orWhereNotNull('o.value_date');
+        });
+
+        // Restrict by calendar visible range if provided (on value_date)
+        if ($start && $end) {
+            $q->whereBetween('o.value_date', [$start, $end]);
+        }
+
+        $rows = $q->limit(5000)->get();
+
+        $events = [];
+        foreach ($rows as $row) {
+            foreach ($dateCols as $col) {
+                if ($milestone !== '' && $milestone !== $col) continue;
+
+                $val = $row->{$col} ?? null;
+                if (!$val) continue;
+                if ($start && $end && !($val >= $start && $val <= $end)) continue;
+
+                $title    = $this->pickFirst([$row->mf_product ?? null], 'Outdoor');
+                $company  = $row->mf_company ?? '—';
+                $objective = $this->pickFirst([$row->remarks ?? null], 'Outdoor');
+
+                $events[] = [
+                    'id'    => "outdoor:{$row->id}:{$col}",
+                    'title' => "{$title} – {$company} – {$this->humanize($objective)}",
+                    'start' => $val,
+                    'color' => self::COLORS['outdoor'],
+                    'allDay' => true,
+                    'extendedProps' => [
+                        'module'        => 'outdoor',
+                        'table'         => $tbl,
+                        'milestone'     => $this->milestoneLabel($col) . $this->getStatusForColumn($row, $col),
+                        'company'       => $company,
+                        'objective_raw' => $objective,
+                        'title_raw'     => $title,
+                        'field_key'     => $row->field_key ?? null,
+                        'field_type'    => $row->field_type ?? null,
+                        'value_text'    => $row->value_text ?? null,
                         'master_file_id' => (int)$row->master_file_id,
                         'year'          => $row->year,
                         'month'         => $row->month,
